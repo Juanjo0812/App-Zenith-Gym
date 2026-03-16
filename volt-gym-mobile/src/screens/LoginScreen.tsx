@@ -1,0 +1,218 @@
+import React, { useState } from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  KeyboardAvoidingView, 
+  Platform,
+  Alert,
+  Dimensions
+} from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+// Assuming regular Views for now to avoid dependency issues
+
+const { width } = Dimensions.get('window');
+
+type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
+
+const LoginScreen = ({ navigation }: Props) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = () => {
+    if (email.toLowerCase() === 'juanjo08' && password === 'App_volt') {
+      navigation.replace('Main');
+    } else {
+      Alert.alert('Error', 'Credenciales incorrectas. Usa: Juanjo08 / App_volt');
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <View style={styles.content}>
+          {/* Top Branding Section */}
+          <View style={styles.logoContainer}>
+            <Text style={styles.voltText}>VOLT</Text>
+            <View style={styles.lineSeparator} />
+            <Text style={styles.gymClubText}>GYM CLUB</Text>
+          </View>
+
+          {/* Welcome Text */}
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeTitle}>Welcome Back</Text>
+            <Text style={styles.welcomeSubtitle}>Sign in to continue your evolution</Text>
+          </View>
+
+          {/* Form Section */}
+          <View style={styles.form}>
+            <View style={styles.inputWrapper}>
+              <Text style={styles.inputLabel}>EMAIL</Text>
+              <TextInput 
+                style={styles.input}
+                placeholder="athlete@volt.com"
+                placeholderTextColor="#666"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Text style={styles.inputLabel}>PASSWORD</Text>
+              <TextInput 
+                style={styles.input}
+                placeholder="••••••••"
+                placeholderTextColor="#666"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <TouchableOpacity style={styles.forgotPassword}>
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.loginButton}
+              onPress={handleLogin}
+            >
+              <Text style={styles.loginButtonText}>LOGIN</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Social / Register Footnote */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <TouchableOpacity>
+              <Text style={styles.signUpText}>Join the Club</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 30,
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 60,
+  },
+  voltText: {
+    fontSize: 70,
+    fontWeight: '900',
+    color: '#FF4500',
+    letterSpacing: -2,
+    lineHeight: 70,
+  },
+  lineSeparator: {
+    width: width * 0.6,
+    height: 1,
+    backgroundColor: '#FF4500',
+    marginVertical: 10,
+    opacity: 0.5,
+  },
+  gymClubText: {
+    fontSize: 20,
+    color: '#FFFFFF',
+    letterSpacing: 8,
+    fontWeight: '300',
+  },
+  welcomeSection: {
+    marginBottom: 40,
+  },
+  welcomeTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: '#888',
+  },
+  form: {
+    gap: 20,
+  },
+  inputWrapper: {
+    gap: 8,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FF4500',
+    letterSpacing: 2,
+  },
+  input: {
+    backgroundColor: '#111',
+    borderWidth: 1,
+    borderColor: '#222',
+    borderRadius: 12,
+    padding: 16,
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+  },
+  forgotPasswordText: {
+    color: '#FF4500',
+    fontSize: 14,
+  },
+  loginButton: {
+    backgroundColor: '#FF4500',
+    padding: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+    shadowColor: '#FF4500',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  loginButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 40,
+  },
+  footerText: {
+    color: '#888',
+    fontSize: 14,
+  },
+  signUpText: {
+    color: '#FF4500',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+});
+
+export default LoginScreen;
