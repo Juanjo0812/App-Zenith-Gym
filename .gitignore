@@ -1,0 +1,28 @@
+# Root .gitignore for App Volt-Gym
+
+# Mobile (React Native / Expo)
+volt-gym-mobile/node_modules/
+volt-gym-mobile/.expo/
+volt-gym-mobile/web-build/
+volt-gym-mobile/dist/
+
+# Backend (Python / FastAPI)
+volt-gym-backend/__pycache__/
+volt-gym-backend/*.pyc
+volt-gym-backend/*.pyo
+volt-gym-backend/*.pyd
+volt-gym-backend/.venv/
+volt-gym-backend/env/
+volt-gym-backend/venv/
+volt-gym-backend/.pytest_cache/
+volt-gym-backend/.coverage
+volt-gym-backend/htmlcov/
+
+# Environment files
+.env
+*.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
