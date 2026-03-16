@@ -14,7 +14,7 @@ export const MOCK_USER = {
 
 export const MOCK_DASHBOARD = {
   lastWorkout: {
-    name: 'Upper Body Power',
+    name: 'Potencia de tren superior',
     date: 'Ayer',
     duration: '1h 15m'
   },
@@ -29,32 +29,32 @@ export const MOCK_DASHBOARD = {
 export const MOCK_ROUTINES = [
   {
     id: '1',
-    name: 'Push Hypertrophy',
-    muscleGroups: ['Pecho', 'Hombros', 'Triceps'],
+    name: 'Empuje hipertrofia',
+    muscleGroups: ['Pecho', 'Hombros', 'Tríceps'],
     exercises: [
-      { name: 'Press de Banca', sets: [{ reps: 8, weight: 80 }, { reps: 8, weight: 80 }, { reps: 7, weight: 80 }] },
-      { name: 'Press Militar', sets: [{ reps: 10, weight: 50 }, { reps: 9, weight: 50 }, { reps: 8, weight: 50 }] },
-      { name: 'Extensiones de Triceps', sets: [{ reps: 12, weight: 25 }, { reps: 12, weight: 25 }, { reps: 10, weight: 25 }] }
+      { name: 'Press de banca', sets: [{ reps: 8, weight: 80 }, { reps: 8, weight: 80 }, { reps: 7, weight: 80 }] },
+      { name: 'Press militar', sets: [{ reps: 10, weight: 50 }, { reps: 9, weight: 50 }, { reps: 8, weight: 50 }] },
+      { name: 'Extensiones de tríceps', sets: [{ reps: 12, weight: 25 }, { reps: 12, weight: 25 }, { reps: 10, weight: 25 }] }
     ]
   },
   {
     id: '2',
-    name: 'Pull Power',
-    muscleGroups: ['Espalda', 'Biceps'],
+    name: 'Tracción fuerza',
+    muscleGroups: ['Espalda', 'Bíceps'],
     exercises: [
-      { name: 'Dominadas Lastradas', sets: [{ reps: 5, weight: 20 }, { reps: 5, weight: 20 }, { reps: 4, weight: 20 }] },
-      { name: 'Remo con Barra', sets: [{ reps: 8, weight: 70 }, { reps: 8, weight: 70 }, { reps: 7, weight: 70 }] },
-      { name: 'Curl de Biceps', sets: [{ reps: 10, weight: 35 }, { reps: 10, weight: 35 }, { reps: 8, weight: 35 }] }
+      { name: 'Dominadas lastradas', sets: [{ reps: 5, weight: 20 }, { reps: 5, weight: 20 }, { reps: 4, weight: 20 }] },
+      { name: 'Remo con barra', sets: [{ reps: 8, weight: 70 }, { reps: 8, weight: 70 }, { reps: 7, weight: 70 }] },
+      { name: 'Curl de bíceps', sets: [{ reps: 10, weight: 35 }, { reps: 10, weight: 35 }, { reps: 8, weight: 35 }] }
     ]
   },
   {
     id: '3',
-    name: 'Legs Volume',
+    name: 'Piernas volumen',
     muscleGroups: ['Piernas', 'Pantorrillas'],
     exercises: [
-      { name: 'Sentadilla Libre', sets: [{ reps: 10, weight: 100 }, { reps: 10, weight: 100 }, { reps: 8, weight: 100 }] },
+      { name: 'Sentadilla libre', sets: [{ reps: 10, weight: 100 }, { reps: 10, weight: 100 }, { reps: 8, weight: 100 }] },
       { name: 'Prensa', sets: [{ reps: 15, weight: 200 }, { reps: 12, weight: 200 }, { reps: 12, weight: 200 }] },
-      { name: 'Elevación de Pantorrillas', sets: [{ reps: 20, weight: 60 }, { reps: 20, weight: 60 }, { reps: 15, weight: 60 }] }
+      { name: 'Elevación de pantorrillas', sets: [{ reps: 20, weight: 60 }, { reps: 20, weight: 60 }, { reps: 15, weight: 60 }] }
     ]
   }
 ];
@@ -99,9 +99,9 @@ export const MOCK_PROGRESS = {
     { date: '15 Mar', weight: 77.1 },
   ],
   strengthGains: [
-    { exercise: 'Bench Press', start: 70, current: 85 },
-    { exercise: 'Squat', start: 90, current: 110 },
-    { exercise: 'Deadlift', start: 100, current: 130 },
+    { exercise: 'Press de banca', start: 70, current: 85 },
+    { exercise: 'Sentadilla', start: 90, current: 110 },
+    { exercise: 'Peso muerto', start: 100, current: 130 },
   ],
   activeChallenges: [
     { id: 'c1', name: 'Marzo de Hierro', progress: 12, total: 20, daysLeft: 10 },

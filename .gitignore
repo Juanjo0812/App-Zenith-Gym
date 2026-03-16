@@ -7,16 +7,16 @@ volt-gym-mobile/web-build/
 volt-gym-mobile/dist/
 
 # Backend (Python / FastAPI)
-volt-gym-backend/__pycache__/
-volt-gym-backend/*.pyc
-volt-gym-backend/*.pyo
-volt-gym-backend/*.pyd
-volt-gym-backend/.venv/
-volt-gym-backend/env/
-volt-gym-backend/venv/
-volt-gym-backend/.pytest_cache/
-volt-gym-backend/.coverage
-volt-gym-backend/htmlcov/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.venv/
+env/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Environment files
 .env

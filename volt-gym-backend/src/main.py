@@ -16,11 +16,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from adapters.api.v1 import workouts, ai_coach
+from src.adapters.api.v1 import workouts, ai_coach, exercises
 
 # Include API routers
 app.include_router(workouts.router, prefix="/api/v1")
 app.include_router(ai_coach.router, prefix="/api/v1")
+app.include_router(exercises.router, prefix="/api/v1")
+
 
 @app.get("/health")
 async def health_check():

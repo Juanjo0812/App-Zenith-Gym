@@ -1,24 +1,79 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView, ScrollView, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MOCK_ROUTINES } from '../data/mockData';
+import { useRoutines } from '../context/RoutineContext';
+import { RootStackParamList } from '../navigation/AppNavigator';
 
-const WorkoutsScreen = () => {
-  const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(MOCK_ROUTINES[0].id);
+type Props = {
+  navigation: any; // Using any for quick integration, ideally use BottomTabNavigationProp combined with NativeStackNavigationProp
+};
+
+const WorkoutsScreen = ({ navigation }: Props) => {
+  const { routines, deleteRoutine, deleteExerciseFromRoutine, updateRoutine, updateExerciseInRoutine } = useRoutines();
+  const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(routines.length > 0 ? routines[0].id : null);
+
+  // States for editing routine name
+  const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
+  const [editedRoutineName, setEditedRoutineName] = useState('');
+
+  // States for editing exercise
+  const [editingExercise, setEditingExercise] = useState<{
+    routineId: string;
+    exerciseIndex: number;
+    weight: string;
+    reps: string;
+    setsCount: string;
+  } | null>(null);
 
   const toggleRoutine = (id: string) => {
     setExpandedRoutineId(expandedRoutineId === id ? null : id);
+  };
+
+  const confirmDeleteRoutine = (id: string, name: string) => {
+    Alert.alert('Eliminar Rutina', `¿Seguro que quieres eliminar "${name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: () => deleteRoutine(id) }
+    ]);
+  };
+
+  const confirmDeleteExercise = (routineId: string, exerciseIndex: number, name: string) => {
+    Alert.alert('Eliminar Ejercicio', `¿Seguro que quieres eliminar "${name}"?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: () => deleteExerciseFromRoutine(routineId, exerciseIndex) }
+    ]);
+  };
+
+  const saveEditedRoutine = () => {
+    if (editingRoutineId && editedRoutineName.trim()) {
+      updateRoutine(editingRoutineId, editedRoutineName.trim());
+      setEditingRoutineId(null);
+    }
+  };
+
+  const saveEditedExercise = () => {
+    if (editingExercise) {
+      updateExerciseInRoutine(
+        editingExercise.routineId,
+        editingExercise.exerciseIndex,
+        Number(editingExercise.weight) || 0,
+        Number(editingExercise.reps) || 0,
+        Number(editingExercise.setsCount) || 1
+      );
+      setEditingExercise(null);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mis Rutinas</Text>
-        <MaterialIcons name="search" size={28} color="#FFFFFF" />
+        <TouchableOpacity onPress={() => navigation.navigate('ExerciseList')}>
+          <MaterialIcons name="search" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {MOCK_ROUTINES.map((routine) => {
+        {routines.map((routine) => {
           const isExpanded = expandedRoutineId === routine.id;
 
           return (
@@ -32,11 +87,29 @@ const WorkoutsScreen = () => {
                   <Text style={styles.routineName}>{routine.name}</Text>
                   <Text style={styles.muscleGroups}>{routine.muscleGroups.join(' • ')}</Text>
                 </View>
-                <MaterialIcons 
-                  name={isExpanded ? 'expand-less' : 'expand-more'} 
-                  size={28} 
-                  color="#FF4500" 
-                />
+                
+                <View style={styles.headerActions}>
+                  <TouchableOpacity 
+                    style={styles.actionIconBtn}
+                    onPress={() => confirmDeleteRoutine(routine.id, routine.name)}
+                  >
+                    <MaterialIcons name="delete-outline" size={24} color="#FF4500" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.actionIconBtn}
+                    onPress={() => {
+                      setEditingRoutineId(routine.id);
+                      setEditedRoutineName(routine.name);
+                    }}
+                  >
+                    <MaterialIcons name="edit" size={24} color="#AAA" />
+                  </TouchableOpacity>
+                  <MaterialIcons 
+                    name={isExpanded ? 'expand-less' : 'expand-more'} 
+                    size={28} 
+                    color="#FF4500" 
+                  />
+                </View>
               </TouchableOpacity>
 
               {isExpanded && (
@@ -45,7 +118,31 @@ const WorkoutsScreen = () => {
                   
                   {routine.exercises.map((exercise, index) => (
                     <View key={index} style={styles.exerciseItem}>
-                      <Text style={styles.exerciseName}>{exercise.name}</Text>
+                      <View style={styles.exerciseHeader}>
+                        <Text style={styles.exerciseName}>{exercise.name}</Text>
+                        <View style={styles.exerciseActions}>
+                          <TouchableOpacity 
+                            onPress={() => {
+                              setEditingExercise({
+                                routineId: routine.id,
+                                exerciseIndex: index,
+                                weight: exercise.sets[0]?.weight?.toString() || '0',
+                                reps: exercise.sets[0]?.reps?.toString() || '0',
+                                setsCount: exercise.sets.length.toString()
+                              });
+                            }}
+                            style={styles.smallActionBtn}
+                          >
+                            <MaterialIcons name="edit" size={18} color="#AAA" />
+                          </TouchableOpacity>
+                          <TouchableOpacity 
+                            onPress={() => confirmDeleteExercise(routine.id, index, exercise.name)}
+                            style={styles.smallActionBtn}
+                          >
+                            <MaterialIcons name="close" size={18} color="#FF4500" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
                       
                       <View style={styles.setsTable}>
                         <View style={styles.tableHead}>
@@ -69,7 +166,10 @@ const WorkoutsScreen = () => {
                     </View>
                   ))}
 
-                  <TouchableOpacity style={styles.startWorkoutButton}>
+                  <TouchableOpacity 
+                    style={styles.startWorkoutButton}
+                    onPress={() => navigation.navigate('ActiveWorkout')}
+                  >
                     <Text style={styles.startWorkoutText}>Iniciar Entreno</Text>
                     <MaterialIcons name="play-arrow" size={20} color="#000" />
                   </TouchableOpacity>
@@ -78,12 +178,97 @@ const WorkoutsScreen = () => {
             </View>
           );
         })}
+        {routines.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No tienes rutinas.{"\n"}Busca ejercicios y añádelos para crear una.</Text>
+          </View>
+        )}
       </ScrollView>
 
-      {/* FAB */}
-      <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
-        <MaterialIcons name="add" size={32} color="#FFFFFF" />
-      </TouchableOpacity>
+      {/* Edit Routine Modal */}
+      <Modal visible={!!editingRoutineId} transparent animationType="fade">
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <View style={styles.modalOverlay}>
+            <KeyboardAvoidingView 
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ width: '100%', alignItems: 'center' }}
+            >
+              <View style={styles.modalCard}>
+                <Text style={styles.modalTitle}>Editar nombre</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editedRoutineName}
+                  onChangeText={setEditedRoutineName}
+                  placeholder="Nombre de la rutina"
+                  placeholderTextColor="#666"
+                  autoCapitalize="sentences"
+                />
+                <View style={styles.modalActions}>
+                  <TouchableOpacity onPress={() => setEditingRoutineId(null)} style={styles.modalBtn}>
+                    <Text style={styles.modalBtnText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={saveEditedRoutine} style={[styles.modalBtn, styles.modalBtnPrimary]}>
+                    <Text style={[styles.modalBtnText, styles.modalBtnTextPrimary]}>Guardar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Edit Exercise Modal */}
+      <Modal visible={!!editingExercise} transparent animationType="fade">
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <View style={styles.modalOverlay}>
+            <KeyboardAvoidingView 
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ width: '100%', alignItems: 'center' }}
+            >
+              <View style={styles.modalCard}>
+                <Text style={styles.modalTitle}>Editar configuración</Text>
+                
+                <Text style={styles.inputLabel}>Series</Text>
+                <TextInput 
+                  style={styles.input} 
+                  keyboardType="numeric" 
+                  value={editingExercise?.setsCount} 
+                  onChangeText={t => setEditingExercise(prev => prev ? {...prev, setsCount: t} : null)} 
+                  returnKeyType="done"
+                />
+
+                <Text style={styles.inputLabel}>Reps (por set)</Text>
+                <TextInput 
+                  style={styles.input} 
+                  keyboardType="numeric" 
+                  value={editingExercise?.reps} 
+                  onChangeText={t => setEditingExercise(prev => prev ? {...prev, reps: t} : null)} 
+                  returnKeyType="done"
+                />
+
+                <Text style={styles.inputLabel}>kg (por set)</Text>
+                <TextInput 
+                  style={styles.input} 
+                  keyboardType="numeric" 
+                  value={editingExercise?.weight} 
+                  onChangeText={t => setEditingExercise(prev => prev ? {...prev, weight: t} : null)} 
+                  returnKeyType="done"
+                />
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity onPress={() => setEditingExercise(null)} style={styles.modalBtn}>
+                    <Text style={styles.modalBtnText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={saveEditedExercise} style={[styles.modalBtn, styles.modalBtnPrimary]}>
+                    <Text style={[styles.modalBtnText, styles.modalBtnTextPrimary]}>Guardar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
     </SafeAreaView>
   );
 };
@@ -217,21 +402,95 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 1,
   },
-  fab: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FF4500',
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  actionIconBtn: {
+    padding: 4,
+  },
+  exerciseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  exerciseActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  smallActionBtn: {
+    padding: 4,
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    color: '#888',
+    textAlign: 'center',
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#FF4500',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#1A1A1A',
+    width: '100%',
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 20,
+  },
+  input: {
+    backgroundColor: '#0F0F0F',
+    borderWidth: 1,
+    borderColor: '#333',
+    borderRadius: 8,
+    padding: 12,
+    color: '#FFF',
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  inputLabel: {
+    color: '#CCC',
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  modalBtnPrimary: {
+    backgroundColor: '#FF4500',
+  },
+  modalBtnText: {
+    color: '#AAA',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  modalBtnTextPrimary: {
+    color: '#000',
   }
 });
 

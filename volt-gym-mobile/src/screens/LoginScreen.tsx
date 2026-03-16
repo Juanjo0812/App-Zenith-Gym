@@ -47,17 +47,17 @@ const LoginScreen = ({ navigation }: Props) => {
 
           {/* Welcome Text */}
           <View style={styles.welcomeSection}>
-            <Text style={styles.welcomeTitle}>Welcome Back</Text>
-            <Text style={styles.welcomeSubtitle}>Sign in to continue your evolution</Text>
+            <Text style={styles.welcomeTitle}>Bienvenido de nuevo</Text>
+            <Text style={styles.welcomeSubtitle}>Inicia sesión para continuar tu evolución</Text>
           </View>
 
           {/* Form Section */}
           <View style={styles.form}>
             <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>EMAIL</Text>
+              <Text style={styles.inputLabel}>CORREO ELECTRÓNICO</Text>
               <TextInput 
                 style={styles.input}
-                placeholder="athlete@volt.com"
+                placeholder="atleta@volt.com"
                 placeholderTextColor="#666"
                 value={email}
                 onChangeText={setEmail}
@@ -67,7 +67,7 @@ const LoginScreen = ({ navigation }: Props) => {
             </View>
 
             <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>PASSWORD</Text>
+              <Text style={styles.inputLabel}>CONTRASEÑA</Text>
               <TextInput 
                 style={styles.input}
                 placeholder="••••••••"
@@ -79,22 +79,22 @@ const LoginScreen = ({ navigation }: Props) => {
             </View>
 
             <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.loginButton}
               onPress={handleLogin}
             >
-              <Text style={styles.loginButtonText}>LOGIN</Text>
+              <Text style={styles.loginButtonText}>INICIAR SESIÓN</Text>
             </TouchableOpacity>
           </View>
 
           {/* Social / Register Footnote */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
+            <Text style={styles.footerText}>¿No tienes una cuenta? </Text>
             <TouchableOpacity>
-              <Text style={styles.signUpText}>Join the Club</Text>
+              <Text style={styles.signUpText}>Únete al club</Text>
             </TouchableOpacity>
           </View>
         </View>
