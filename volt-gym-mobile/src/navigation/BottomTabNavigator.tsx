@@ -26,7 +26,7 @@ const BottomTabNavigator = () => {
         tabBarActiveTintColor: '#FF4500', // VOLT Orange
         tabBarInactiveTintColor: '#A0A0B8', // Gray
         tabBarIcon: ({ color, size }) => {
-          let iconName: keyof typeof MaterialIcons.glyphMap;
+          let iconName: React.ComponentProps<typeof MaterialIcons>['name'];
 
           switch (route.name) {
             case 'Home':
