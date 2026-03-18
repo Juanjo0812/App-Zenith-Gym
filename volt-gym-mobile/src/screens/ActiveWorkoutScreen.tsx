@@ -97,7 +97,11 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
     }
 
     try {
-      const res = await workoutApi.logSet(sessionId, block.exercise.id, reps, weight);
+      const res = await workoutApi.logSet(sessionId, block.exercise.id, {
+        reps,
+        weight_kg: weight,
+        rest_seconds: 60
+      });
       setExerciseBlocks((prev) => {
         const updated = [...prev];
         const sets = [...updated[blockIdx].sets];
