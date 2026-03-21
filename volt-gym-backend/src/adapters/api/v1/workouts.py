@@ -1,24 +1,56 @@
 """
-Workout API routes — wired to real database via repositories.
+Workout API routes wired to the database and protected with Supabase JWTs.
 """
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
-from uuid import UUID, uuid4
-from typing import Optional
 from datetime import datetime
+from typing import List, Optional
+from uuid import UUID, uuid4
 
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from src.infrastructure.database.base import get_session
-from src.infrastructure.database.models import WorkoutSessionModel, SetLogModel
 from src.config.dependencies import get_log_session_use_case
+from src.infrastructure.auth import AuthenticatedUser, get_current_user
+from src.infrastructure.database.base import get_session
+from src.infrastructure.database.models import (
+    ExerciseModel,
+    RoutineExerciseModel,
+    SetLogModel,
+    WorkoutRoutineModel,
+    WorkoutSessionModel,
+)
 
 router = APIRouter(prefix="/workouts", tags=["Workouts"])
 
 
-# ── Request / Response schemas ──────────────────────────────────────
+class RoutineExerciseBase(BaseModel):
+    exercise_id: UUID
+    order_index: int
+    target_sets: int = 3
+    target_reps: int = 10
+    target_weight_kg: float = 0.0
+
+
+class RoutineExerciseResponse(RoutineExerciseBase):
+    id: UUID
+    routine_id: UUID
+    exercise_name: str | None = None
+    exercise_muscle: str | None = None
+
+
+class RoutineCreateRequest(BaseModel):
+    name: str
+    exercises: List[RoutineExerciseBase]
+
+
+class RoutineResponse(BaseModel):
+    id: UUID
+    name: str
+    is_ai_generated: bool
+    exercises: List[RoutineExerciseResponse]
+
 
 class StartSessionRequest(BaseModel):
     routine_id: Optional[UUID] = None
@@ -53,19 +85,192 @@ class CompleteSessionResponse(BaseModel):
     leveled_up: bool
 
 
-# ── Endpoints ───────────────────────────────────────────────────────
+async def _load_user_routine(
+    db: AsyncSession,
+    *,
+    routine_id: UUID,
+    user_id: UUID,
+) -> WorkoutRoutineModel | None:
+    result = await db.execute(
+        select(WorkoutRoutineModel)
+        .where(
+            WorkoutRoutineModel.id == routine_id,
+            WorkoutRoutineModel.user_id == user_id,
+        )
+        .options(
+            selectinload(WorkoutRoutineModel.routine_exercises).selectinload(
+                RoutineExerciseModel.exercise
+            )
+        )
+    )
+    return result.scalars().first()
+
+
+def _routine_to_response(routine: WorkoutRoutineModel) -> RoutineResponse:
+    return RoutineResponse(
+        id=routine.id,
+        name=routine.name,
+        is_ai_generated=routine.is_ai_generated,
+        exercises=[
+            RoutineExerciseResponse(
+                id=exercise.id,
+                routine_id=exercise.routine_id,
+                exercise_id=exercise.exercise_id,
+                order_index=exercise.order_index,
+                target_sets=exercise.target_sets,
+                target_reps=exercise.target_reps,
+                target_weight_kg=float(exercise.target_weight_kg),
+                exercise_name=exercise.exercise.name if exercise.exercise else None,
+                exercise_muscle=exercise.exercise.primary_muscle if exercise.exercise else None,
+            )
+            for exercise in sorted(routine.routine_exercises, key=lambda item: item.order_index)
+        ],
+    )
+
+
+@router.get("/routines", response_model=List[RoutineResponse])
+async def get_routines(
+    db: AsyncSession = Depends(get_session),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    query = (
+        select(WorkoutRoutineModel)
+        .where(WorkoutRoutineModel.user_id == current_user.id)
+        .order_by(WorkoutRoutineModel.created_at.desc())
+        .options(
+            selectinload(WorkoutRoutineModel.routine_exercises).selectinload(
+                RoutineExerciseModel.exercise
+            )
+        )
+    )
+    result = await db.execute(query)
+    routines = result.scalars().all()
+    return [_routine_to_response(routine) for routine in routines]
+
+
+@router.post("/routines", status_code=201, response_model=RoutineResponse)
+async def create_routine(
+    req: RoutineCreateRequest,
+    db: AsyncSession = Depends(get_session),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    routine_id = uuid4()
+    new_routine = WorkoutRoutineModel(
+        id=routine_id,
+        user_id=current_user.id,
+        name=req.name,
+        is_ai_generated=False,
+        created_at=datetime.utcnow(),
+    )
+
+    db.add(new_routine)
+
+    for exercise in req.exercises:
+        routine_exercise = RoutineExerciseModel(
+            id=uuid4(),
+            routine_id=routine_id,
+            exercise_id=exercise.exercise_id,
+            order_index=exercise.order_index,
+            target_sets=exercise.target_sets,
+            target_reps=exercise.target_reps,
+            target_weight_kg=exercise.target_weight_kg,
+        )
+        db.add(routine_exercise)
+
+    await db.commit()
+
+    created_routine = await _load_user_routine(
+        db,
+        routine_id=routine_id,
+        user_id=current_user.id,
+    )
+    if not created_routine:
+        raise HTTPException(status_code=500, detail="No se pudo cargar la rutina creada")
+
+    return _routine_to_response(created_routine)
+
+
+@router.put("/routines/{routine_id}", response_model=RoutineResponse)
+async def update_routine(
+    routine_id: UUID,
+    req: RoutineCreateRequest,
+    db: AsyncSession = Depends(get_session),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    routine = await _load_user_routine(
+        db,
+        routine_id=routine_id,
+        user_id=current_user.id,
+    )
+
+    if not routine:
+        raise HTTPException(status_code=404, detail="Rutina no encontrada")
+
+    routine.name = req.name
+
+    for old_exercise in routine.routine_exercises:
+        await db.delete(old_exercise)
+
+    routine.routine_exercises = []
+    for exercise in req.exercises:
+        routine_exercise = RoutineExerciseModel(
+            id=uuid4(),
+            routine_id=routine_id,
+            exercise_id=exercise.exercise_id,
+            order_index=exercise.order_index,
+            target_sets=exercise.target_sets,
+            target_reps=exercise.target_reps,
+            target_weight_kg=exercise.target_weight_kg,
+        )
+        db.add(routine_exercise)
+        routine.routine_exercises.append(routine_exercise)
+
+    await db.commit()
+
+    updated_routine = await _load_user_routine(
+        db,
+        routine_id=routine_id,
+        user_id=current_user.id,
+    )
+    if not updated_routine:
+        raise HTTPException(status_code=500, detail="No se pudo cargar la rutina actualizada")
+
+    return _routine_to_response(updated_routine)
+
+
+@router.delete("/routines/{routine_id}", status_code=204)
+async def delete_routine(
+    routine_id: UUID,
+    db: AsyncSession = Depends(get_session),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(WorkoutRoutineModel).where(
+            WorkoutRoutineModel.id == routine_id,
+            WorkoutRoutineModel.user_id == current_user.id,
+        )
+    )
+    routine = result.scalars().first()
+
+    if not routine:
+        raise HTTPException(status_code=404, detail="Rutina no encontrada")
+
+    await db.delete(routine)
+    await db.commit()
+    return None
+
 
 @router.post("/sessions", status_code=201, response_model=StartSessionResponse)
 async def start_session(
-    req: StartSessionRequest = StartSessionRequest(),
+    req: Optional[StartSessionRequest] = None,
     db: AsyncSession = Depends(get_session),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ):
-    """Creates a new workout session in the database."""
+    payload = req or StartSessionRequest()
     new_session = WorkoutSessionModel(
         id=uuid4(),
-        # TODO: replace with real authenticated user_id
-        user_id=UUID("00000000-0000-0000-0000-000000000001"),
-        routine_id=req.routine_id,
+        user_id=current_user.id,
+        routine_id=payload.routine_id,
         started_at=datetime.utcnow(),
     )
     db.add(new_session)
@@ -79,17 +284,24 @@ async def log_set(
     session_id: UUID,
     req: LogSetRequest,
     db: AsyncSession = Depends(get_session),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ):
-    """Logs a single set to the database, linked to the given session."""
-    # Verify session exists
     result = await db.execute(
         select(WorkoutSessionModel).where(WorkoutSessionModel.id == session_id)
     )
     session_row = result.scalars().first()
     if not session_row:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Sesión no encontrada")
+    if session_row.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="No puedes modificar esta sesión")
     if session_row.ended_at is not None:
-        raise HTTPException(status_code=400, detail="Session is already completed")
+        raise HTTPException(status_code=400, detail="La sesión ya fue completada")
+
+    exercise_result = await db.execute(
+        select(ExerciseModel.id).where(ExerciseModel.id == req.exercise_id)
+    )
+    if not exercise_result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Ejercicio no encontrado")
 
     new_set = SetLogModel(
         id=uuid4(),
@@ -111,19 +323,18 @@ async def update_session(
     session_id: UUID,
     req: SessionUpdateRequest,
     use_case=Depends(get_log_session_use_case),
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ):
-    """
-    Marks a session as completed and triggers gamification XP calculation.
-    """
     if req.status != "completed":
-        raise HTTPException(status_code=400, detail="Only 'completed' status is currently supported")
+        raise HTTPException(status_code=400, detail="Solo se admite el estado 'completed'")
 
     try:
-        # TODO: replace with real authenticated user_id
         result = await use_case.execute(
             session_id=session_id,
-            user_id=UUID("00000000-0000-0000-0000-000000000001"),
+            user_id=current_user.id,
         )
         return CompleteSessionResponse(**result)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc

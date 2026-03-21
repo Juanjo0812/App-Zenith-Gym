@@ -17,23 +17,19 @@ class LogSessionUseCase:
         user: Optional[UserEntity] = await self.user_repo.get_by_id(user_id)
         
         if not session or not user:
-            raise ValueError("Session or User not found")
+            raise ValueError("La sesión o el usuario no existen")
+        if session.user_id != user_id:
+            raise PermissionError("No tienes permisos para completar esta sesión")
+        if session.ended_at is not None:
+            raise ValueError("La sesión ya fue completada")
         
         # Complete session
         session.complete_session()
         
-        # Gamification calculation logic (simplified for MVP)
-        # Base XP: 50 for completing
-        xp_earned = 50
+        # Keep the current visible mobile formula during the migration.
+        xp_earned = len(session.sets) * 5
         
-        # Volume bonus: 1 XP per 100 kg
-        xp_earned += int(session.total_volume // 100)
-        
-        # PR bonus: 20 XP per PR
-        pr_count = sum(1 for s in session.sets if s.is_pr)
-        xp_earned += (20 * pr_count)
-        
-        leveled_up = user.award_xp(xp_earned)
+        leveled_up = user.award_xp(xp_earned, xp_per_level=500)
         
         # Persist changes
         await self.workout_repo.save(session)

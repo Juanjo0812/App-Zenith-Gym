@@ -134,13 +134,38 @@ volt-gym-backend/
 ### 5.1 Entities Mapping
 
 ```sql
--- Identity
+-- Identity & Auth (Supabase Auth integration)
 CREATE TABLE users (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY REFERENCES auth.users(id),
     name VARCHAR(255),
+    profile_image_url TEXT,
+    phone_number VARCHAR(50),
+    address TEXT,
     level INT DEFAULT 1,
     total_xp INT DEFAULT 0,
-    created_at TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+-- Roles System
+CREATE TABLE roles (
+    id UUID PRIMARY KEY,
+    name VARCHAR(50) UNIQUE
+);
+-- Default roles to insert: 'user', 'coach', 'admin'
+
+CREATE TABLE user_roles (
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, role_id)
+);
+
+-- Coaching Relationship
+CREATE TABLE coach_clients (
+    coach_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    client_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (coach_id, client_id)
 );
 
 -- Fitness Context: Library
@@ -152,7 +177,9 @@ CREATE TABLE exercises (
     equipment VARCHAR(100),
     difficulty VARCHAR(50),
     instructions TEXT,
-    video_url TEXT
+    video_url TEXT,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    is_public BOOLEAN DEFAULT true
 );
 
 -- Fitness Context: Workouts
@@ -161,6 +188,16 @@ CREATE TABLE workout_routines (
     user_id UUID REFERENCES users(id),
     name VARCHAR(255),
     is_ai_generated BOOLEAN
+);
+
+CREATE TABLE routine_exercises (
+    id UUID PRIMARY KEY,
+    routine_id UUID REFERENCES workout_routines(id) ON DELETE CASCADE,
+    exercise_id UUID REFERENCES exercises(id),
+    order_index INT DEFAULT 0,
+    target_sets INT DEFAULT 3,
+    target_reps INT DEFAULT 10,
+    target_weight_kg DECIMAL DEFAULT 0.0
 );
 
 CREATE TABLE workout_sessions (
@@ -220,7 +257,10 @@ CREATE TABLE recovery_logs (
 
 ### 6.1 Workouts & Exercises
 - `GET /api/v1/exercises` — Filterable by muscle, equipment.
-- `POST /api/v1/workouts/routines` — Create a custom routine.
+- `GET /api/v1/workouts/routines` — List user's custom routines with their exercises.
+- `POST /api/v1/workouts/routines` — Create a new routine with included exercises.
+- `PUT /api/v1/workouts/routines/{routine_id}` — Update routine name and embedded exercises.
+- `DELETE /api/v1/workouts/routines/{routine_id}` — Remove a custom routine.
 - `POST /api/v1/workouts/sessions` — Start a session.
 - `POST /api/v1/workouts/sessions/{session_id}/sets` — Log sets sequentially.
 

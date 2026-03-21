@@ -1,6 +1,17 @@
-import React, { useState, useRef } from 'react';
-import { StyleSheet, View, Text, SafeAreaView, ScrollView, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useRef, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+
 import { MOCK_CHAT } from '../data/mockData';
 
 const AICoachScreen = () => {
@@ -9,21 +20,19 @@ const AICoachScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
           <MaterialIcons name="auto-awesome" size={24} color="#FF4500" />
-          <Text style={styles.headerTitle}>VOLT Coach</Text>
+          <Text style={styles.headerTitle}>Entrenador VOLT</Text>
         </View>
-        <Text style={styles.headerSubtitle}>Entrenador Personal IA</Text>
+        <Text style={styles.headerSubtitle}>Entrenador personal con IA</Text>
       </View>
 
-      {/* Chat Area */}
-      <KeyboardAvoidingView 
-        style={styles.chatContainer} 
+      <KeyboardAvoidingView
+        style={styles.chatContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView 
+        <ScrollView
           ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
@@ -31,11 +40,11 @@ const AICoachScreen = () => {
           {MOCK_CHAT.map((msg) => {
             const isUser = msg.role === 'user';
             return (
-              <View 
-                key={msg.id} 
+              <View
+                key={msg.id}
                 style={[
-                  styles.messageWrapper, 
-                  isUser ? styles.messageWrapperUser : styles.messageWrapperAI
+                  styles.messageWrapper,
+                  isUser ? styles.messageWrapperUser : styles.messageWrapperAI,
                 ]}
               >
                 {!isUser && (
@@ -43,11 +52,13 @@ const AICoachScreen = () => {
                     <MaterialIcons name="smart-toy" size={16} color="#FFFFFF" />
                   </View>
                 )}
-                
-                <View style={[
-                  styles.messageBubble,
-                  isUser ? styles.messageBubbleUser : styles.messageBubbleAI
-                ]}>
+
+                <View
+                  style={[
+                    styles.messageBubble,
+                    isUser ? styles.messageBubbleUser : styles.messageBubbleAI,
+                  ]}
+                >
                   <Text style={[styles.messageText, isUser && styles.messageTextUser]}>
                     {msg.text}
                   </Text>
@@ -60,26 +71,25 @@ const AICoachScreen = () => {
           })}
         </ScrollView>
 
-        {/* Input Area */}
         <View style={styles.inputContainer}>
           <TouchableOpacity style={styles.attachButton}>
             <MaterialIcons name="add" size={24} color="#A0A0B8" />
           </TouchableOpacity>
           <TextInput
             style={styles.input}
-            placeholder="Pregúntale a tu Coach..."
+            placeholder="Pregúntale a tu entrenador..."
             placeholderTextColor="#888888"
             value={message}
             onChangeText={setMessage}
             multiline
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.sendButton, message.trim().length > 0 && styles.sendButtonActive]}
           >
-            <MaterialIcons 
-              name="send" 
-              size={20} 
-              color={message.trim().length > 0 ? '#FFFFFF' : '#888888'} 
+            <MaterialIcons
+              name="send"
+              size={20}
+              color={message.trim().length > 0 ? '#FFFFFF' : '#888888'}
             />
           </TouchableOpacity>
         </View>
@@ -213,8 +223,7 @@ const styles = StyleSheet.create({
   },
   sendButtonActive: {
     backgroundColor: '#FF4500',
-  }
+  },
 });
 
 export default AICoachScreen;
-

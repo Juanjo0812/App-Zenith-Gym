@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { MOCK_ROUTINES } from '../data/mockData';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { workoutApi, RoutineResponse, RoutineCreateRequest, RoutineExerciseRequest, RoutineExerciseResponse } from '../features/workouts/api/workoutApi';
 
 export type ExerciseSet = {
   reps: number;
@@ -7,147 +7,250 @@ export type ExerciseSet = {
 };
 
 export type RoutineExercise = {
+  id?: string;
+  exerciseId: string;
   name: string;
   sets: ExerciseSet[];
+  orderIndex: number;
 };
 
 export type Routine = {
   id: string;
   name: string;
-  muscleGroups: string[];
+  muscleGroups: string[]; // derived or empty for now
   exercises: RoutineExercise[];
 };
 
 type RoutineContextType = {
   routines: Routine[];
+  isLoading: boolean;
+  refreshRoutines: () => Promise<void>;
   addExerciseToRoutine: (
+    routineId: string | null,
     routineName: string,
+    exerciseId: string,
     exerciseName: string,
     muscleGroup: string,
     weight: number,
     reps: number,
     setsCount: number
-  ) => void;
-  updateRoutine: (
+  ) => Promise<void>;
+  updateRoutineName: (
     id: string,
     newName: string
-  ) => void;
+  ) => Promise<void>;
   updateExerciseInRoutine: (
     routineId: string,
     exerciseIndex: number,
     weight: number,
     reps: number,
     setsCount: number
-  ) => void;
-  deleteExerciseFromRoutine: (routineId: string, exerciseIndex: number) => void;
-  deleteRoutine: (id: string) => void;
+  ) => Promise<void>;
+  deleteExerciseFromRoutine: (routineId: string, exerciseIndex: number) => Promise<void>;
+  deleteRoutine: (id: string) => Promise<void>;
 };
 
 const RoutineContext = createContext<RoutineContextType | undefined>(undefined);
 
 export const RoutineProvider = ({ children }: { children: ReactNode }) => {
-  const [routines, setRoutines] = useState<Routine[]>(MOCK_ROUTINES);
+  const [routines, setRoutines] = useState<Routine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const addExerciseToRoutine = (
+  // Helper to map backend format to our local UI format
+  const mapBackendToRoutine = (r: RoutineResponse): Routine => {
+    // Derive muscle groups from exercise data
+    const muscleGroups = [...new Set(
+      r.exercises
+        .map((e: RoutineExerciseResponse) => e.exercise_muscle)
+        .filter(Boolean)
+    )] as string[];
+
+    return {
+      id: r.id,
+      name: r.name,
+      muscleGroups,
+      exercises: r.exercises.sort((a: RoutineExerciseResponse, b: RoutineExerciseResponse) => a.order_index - b.order_index).map((e: RoutineExerciseResponse) => ({
+        id: e.id,
+        exerciseId: e.exercise_id,
+        name: e.exercise_name ?? 'Ejercicio desconocido',
+        orderIndex: e.order_index,
+        sets: Array.from({ length: e.target_sets || 3 }, () => ({
+          reps: e.target_reps || 10,
+          weight: e.target_weight_kg || 0
+        }))
+      }))
+    };
+  }
+
+  const refreshRoutines = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const data = await workoutApi.getRoutines();
+      setRoutines(data.map(mapBackendToRoutine));
+    } catch (error) {
+      console.error("Failed to fetch routines", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshRoutines();
+  }, [refreshRoutines]);
+
+  const addExerciseToRoutine = async (
+    routineId: string | null,
     routineName: string,
+    exerciseId: string,
     exerciseName: string,
-    muscleGroup: string,
+    muscleGroup: string, // currently unused in DB but kept for param signature
     weight: number,
     reps: number,
     setsCount: number
   ) => {
-    setRoutines((prev) => {
-      const existingRoutineIndex = prev.findIndex((r) => r.name.toLowerCase() === routineName.trim().toLowerCase());
+    try {
+      // 1. If we have an existing routine, update it
+      const existingRoutine = routines.find(r => r.id === routineId || r.name.toLowerCase() === routineName.trim().toLowerCase());
       
-      const newSets = Array.from({ length: setsCount }, () => ({ reps, weight }));
-      
-      if (existingRoutineIndex >= 0) {
-        // Add to existing routine
-        const updated = [...prev];
-        const routine = updated[existingRoutineIndex];
+      const newExerciseRequest: RoutineExerciseRequest = {
+        exercise_id: exerciseId,
+        order_index: existingRoutine ? existingRoutine.exercises.length : 0,
+        target_sets: setsCount,
+        target_reps: reps,
+        target_weight_kg: weight
+      };
+
+      if (existingRoutine) {
+        // Map existing exercises to request format plus the new one
+        const currentExercises: RoutineExerciseRequest[] = existingRoutine.exercises.map(e => ({
+          exercise_id: e.exerciseId,
+          order_index: e.orderIndex,
+          target_sets: e.sets.length,
+          target_reps: e.sets[0]?.reps || 10,
+          target_weight_kg: e.sets[0]?.weight || 0
+        }));
         
-        // Add muscle group if not exists
-        if (!routine.muscleGroups.includes(muscleGroup)) {
-          routine.muscleGroups.push(muscleGroup);
-        }
-        
-        // Add exercise
-        routine.exercises.push({
-          name: exerciseName,
-          sets: newSets,
+        currentExercises.push(newExerciseRequest);
+
+        await workoutApi.updateRoutine(existingRoutine.id, {
+          name: existingRoutine.name,
+          exercises: currentExercises
         });
-        
-        return updated;
       } else {
-        // Create new routine
-        return [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            name: routineName.trim(),
-            muscleGroups: [muscleGroup],
-            exercises: [
-              {
-                name: exerciseName,
-                sets: newSets,
-              }
-            ]
-          }
-        ];
+        // 2. Create entirely new routine
+        await workoutApi.createRoutine({
+          name: routineName.trim(),
+          exercises: [newExerciseRequest]
+        });
       }
-    });
+      
+      await refreshRoutines();
+    } catch (e) {
+      console.error("Failed to add exercise to routine", e);
+    }
   };
 
-  const updateRoutine = (id: string, newName: string) => {
-    setRoutines((prev) => 
-      prev.map((r) => (r.id === id ? { ...r, name: newName } : r))
-    );
+  const updateRoutineName = async (id: string, newName: string) => {
+    try {
+      const existing = routines.find(r => r.id === id);
+      if (!existing) return;
+
+      const exercisesReq: RoutineExerciseRequest[] = existing.exercises.map(e => ({
+        exercise_id: e.exerciseId,
+        order_index: e.orderIndex,
+        target_sets: e.sets.length,
+        target_reps: e.sets[0]?.reps || 10,
+        target_weight_kg: e.sets[0]?.weight || 0
+      }));
+
+      await workoutApi.updateRoutine(id, { name: newName, exercises: exercisesReq });
+      await refreshRoutines();
+    } catch (e) {
+      console.error("Failed to update routine name", e);
+    }
   };
 
-  const updateExerciseInRoutine = (
+  const updateExerciseInRoutine = async (
     routineId: string,
     exerciseIndex: number,
     weight: number,
     reps: number,
     setsCount: number
   ) => {
-    setRoutines((prev) => {
-      const updated = [...prev];
-      const routineIndex = updated.findIndex((r) => r.id === routineId);
-      if (routineIndex >= 0) {
-        const routine = updated[routineIndex];
-        if (routine.exercises[exerciseIndex]) {
-          routine.exercises[exerciseIndex].sets = Array.from({ length: setsCount }, () => ({
-            weight,
-            reps,
-          }));
+    try {
+      const existing = routines.find(r => r.id === routineId);
+      if (!existing) return;
+
+      const exercisesReq: RoutineExerciseRequest[] = existing.exercises.map((e, idx) => {
+        if (idx === exerciseIndex) {
+            return {
+                exercise_id: e.exerciseId,
+                order_index: e.orderIndex,
+                target_sets: setsCount,
+                target_reps: reps,
+                target_weight_kg: weight
+            };
         }
-      }
-      return updated;
-    });
+        return {
+            exercise_id: e.exerciseId,
+            order_index: e.orderIndex,
+            target_sets: e.sets.length,
+            target_reps: e.sets[0]?.reps || 10,
+            target_weight_kg: e.sets[0]?.weight || 0
+        };
+      });
+
+      await workoutApi.updateRoutine(routineId, { name: existing.name, exercises: exercisesReq });
+      await refreshRoutines();
+    } catch (e) {
+      console.error("Failed to update exercise in routine", e);
+    }
   };
 
-  const deleteExerciseFromRoutine = (routineId: string, exerciseIndex: number) => {
-    setRoutines((prev) => {
-      const updated = [...prev];
-      const routineIndex = updated.findIndex((r) => r.id === routineId);
-      if (routineIndex >= 0) {
-        updated[routineIndex].exercises.splice(exerciseIndex, 1);
-      }
-      return updated;
-    });
+  const deleteExerciseFromRoutine = async (routineId: string, exerciseIndex: number) => {
+    try {
+      const existing = routines.find(r => r.id === routineId);
+      if (!existing) return;
+
+      const exercisesReq: RoutineExerciseRequest[] = [];
+      let newOrderIndex = 0;
+      
+      existing.exercises.forEach((e, idx) => {
+        if (idx !== exerciseIndex) {
+            exercisesReq.push({
+                exercise_id: e.exerciseId,
+                order_index: newOrderIndex++,
+                target_sets: e.sets.length,
+                target_reps: e.sets[0]?.reps || 10,
+                target_weight_kg: e.sets[0]?.weight || 0
+            });
+        }
+      });
+
+      await workoutApi.updateRoutine(routineId, { name: existing.name, exercises: exercisesReq });
+      await refreshRoutines();
+    } catch (e) {
+      console.error("Failed to delete exercise from routine", e);
+    }
   };
 
-  const deleteRoutine = (id: string) => {
-    setRoutines((prev) => prev.filter((r) => r.id !== id));
+  const deleteRoutine = async (id: string) => {
+    try {
+      await workoutApi.deleteRoutine(id);
+      await refreshRoutines();
+    } catch (e) {
+      console.error("Failed to delete routine", e);
+    }
   };
 
   return (
     <RoutineContext.Provider
       value={{
         routines,
+        isLoading,
+        refreshRoutines,
         addExerciseToRoutine,
-        updateRoutine,
+        updateRoutineName,
         updateExerciseInRoutine,
         deleteExerciseFromRoutine,
         deleteRoutine,

@@ -57,7 +57,7 @@ const HomeScreen = ({ navigation }: Props) => {
             <Text style={styles.userName}>{profile.username || profile.name}</Text>
           </View>
           <View style={styles.levelBadge}>
-            <Text style={styles.levelText}>LVL {profile.level}</Text>
+            <Text style={styles.levelText}>Nivel {profile.level}</Text>
           </View>
         </View>
 
@@ -76,7 +76,7 @@ const HomeScreen = ({ navigation }: Props) => {
         <View style={[styles.card, styles.highlightCard]}>
           <View style={styles.cardHeaderRow}>
             <MaterialIcons name="auto-awesome" size={20} color="#FF4500" />
-            <Text style={styles.highlightTitle}>Coach AI</Text>
+            <Text style={styles.highlightTitle}>Entrenador con IA</Text>
           </View>
           <Text style={styles.recommendationText}>
             {dashboard?.lastWorkout

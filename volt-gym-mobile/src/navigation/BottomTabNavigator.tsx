@@ -56,7 +56,7 @@ const BottomTabNavigator = () => {
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Inicio' }} />
       <Tab.Screen name="Workouts" component={WorkoutsScreen} options={{ tabBarLabel: 'Entrenos' }} />
       <Tab.Screen name="Progress" component={ProgressScreen} options={{ tabBarLabel: 'Progreso' }} />
-      <Tab.Screen name="AICoach" component={AICoachScreen} options={{ tabBarLabel: 'Coach' }} />
+      <Tab.Screen name="AICoach" component={AICoachScreen} options={{ tabBarLabel: 'Entrenador' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil' }} />
     </Tab.Navigator>
   );

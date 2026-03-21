@@ -1,20 +1,25 @@
 {
   "version": 1,
   "skills": {
+    "api-design-principles": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "b242f962d5f78bf8bc147e92f2aa0341459b9f5f2f955e9867a8c41b85f22648"
+    },
     "architecture-patterns": {
       "source": "wshobson/agents",
       "sourceType": "github",
       "computedHash": "baa0be9b01540d612be90820e654dccd2e41877f57e65ef1dc51a5387c5eecb9"
     },
-     "api-design-principles": {
-      "source": "wshobson/agents",
-      "sourceType": "github",
-      "computedHash": "b242f962d5f78bf8bc147e92f2aa0341459b9f5f2f955e9867a8c41b85f22648"
-    },
     "git-commit": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
       "computedHash": "2607fc60629b82b257136dd2a7a373f0a4466c0b49df7746d845d59313c99b21"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "e3ba3d760c5f4cc43b02a91fb8924f726c7818f95cc35d79d0a606ca622b72f5"
     }
   }
 }

@@ -7,6 +7,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { workoutApi, Exercise } from '../features/workouts/api/workoutApi';
 import { useRoutines } from '../context/RoutineContext';
+import ScaleTouchable from '../shared/ui/ScaleTouchable';
 
 // Static image mapping for React Native
 const EXERCISE_IMAGES: Record<string, any> = {
@@ -333,18 +334,18 @@ const ExerciseListScreen = ({ navigation, route }: Props) => {
                         </View>
                       </View>
 
-                      <TouchableOpacity style={styles.confirmButton} onPress={confirmAddToRoutine}>
+                      <ScaleTouchable style={styles.confirmButton} onPress={confirmAddToRoutine}>
                         <Text style={styles.confirmButtonText}>Añadir a rutina</Text>
-                      </TouchableOpacity>
+                      </ScaleTouchable>
                     </View>
                   )}
                 </ScrollView>
               </KeyboardAvoidingView>
 
               {!showConfigForm && (
-                <TouchableOpacity style={styles.addButton} onPress={addExerciseToWorkout}>
+                <ScaleTouchable style={styles.addButton} onPress={addExerciseToWorkout}>
                   <MaterialIcons name="add" size={28} color="#000" />
-                </TouchableOpacity>
+                </ScaleTouchable>
               )}
             </View>
           )}

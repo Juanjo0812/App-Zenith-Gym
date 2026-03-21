@@ -1,7 +1,5 @@
 import apiClient from '../../../shared/api/apiClient';
 
-// ── Types ──────────────────────────────────────────────
-
 export interface Exercise {
   id: string;
   name: string;
@@ -13,12 +11,50 @@ export interface Exercise {
   video_url: string | null;
 }
 
-export interface StartSessionResponse {
-  session_id: string;
-  status: string;
+export interface RoutineExerciseRequest {
+  exercise_id: string;
+  order_index: number;
+  target_sets?: number;
+  target_reps?: number;
+  target_weight_kg?: number;
 }
 
-export interface LogSetResponse {
+export interface RoutineExerciseResponse {
+  id: string;
+  routine_id: string;
+  exercise_id: string;
+  order_index: number;
+  target_sets: number;
+  target_reps: number;
+  target_weight_kg: number;
+  exercise_name?: string;
+  exercise_muscle?: string;
+}
+
+export interface RoutineCreateRequest {
+  name: string;
+  exercises: RoutineExerciseRequest[];
+}
+
+export interface RoutineResponse {
+  id: string;
+  name: string;
+  is_ai_generated: boolean;
+  exercises: RoutineExerciseResponse[];
+}
+
+export interface StartSessionResponse {
+  session_id: string;
+  status?: string;
+}
+
+export interface SetLogRequest {
+  reps: number;
+  weight_kg: number;
+  rest_seconds?: number;
+}
+
+export interface SetLogResponse {
   set_id: string;
   status: string;
 }
@@ -31,51 +67,69 @@ export interface CompleteSessionResponse {
   leveled_up: boolean;
 }
 
-// ── API Calls ──────────────────────────────────────────
-
 export const workoutApi = {
-  /** Fetch exercise library with optional filters */
   getExercises: async (muscle?: string, equipment?: string): Promise<Exercise[]> => {
-    const params: Record<string, string> = {};
-    if (muscle) params.muscle = muscle;
-    if (equipment) params.equipment = equipment;
-    const { data } = await apiClient.get<Exercise[]>('/exercises', { params });
-    return data;
-  },
-
-  /** Create a new workout session */
-  startSession: async (routineId?: string): Promise<StartSessionResponse> => {
-    const { data } = await apiClient.post<StartSessionResponse>('/workouts/sessions', {
-      routine_id: routineId ?? null,
+    const { data } = await apiClient.get<Exercise[]>('/exercises', {
+      params: {
+        muscle,
+        equipment,
+      },
     });
+    return data ?? [];
+  },
+
+  getMuscleGroups: async (): Promise<string[]> => {
+    const exercises = await workoutApi.getExercises();
+    const muscles = [...new Set(exercises.map((exercise) => exercise.primary_muscle))];
+    return muscles.sort();
+  },
+
+  getRoutines: async (): Promise<RoutineResponse[]> => {
+    const { data } = await apiClient.get<RoutineResponse[]>('/workouts/routines');
+    return data ?? [];
+  },
+
+  createRoutine: async (routineData: RoutineCreateRequest): Promise<RoutineResponse> => {
+    const { data } = await apiClient.post<RoutineResponse>('/workouts/routines', routineData);
     return data;
   },
 
-  /** Log a single set into an active session */
+  updateRoutine: async (routineId: string, routineData: RoutineCreateRequest): Promise<RoutineResponse> => {
+    const { data } = await apiClient.put<RoutineResponse>(`/workouts/routines/${routineId}`, routineData);
+    return data;
+  },
+
+  deleteRoutine: async (routineId: string): Promise<void> => {
+    await apiClient.delete(`/workouts/routines/${routineId}`);
+  },
+
+  startSession: async (routineId?: string): Promise<StartSessionResponse> => {
+    const payload = routineId ? { routine_id: routineId } : {};
+    const { data } = await apiClient.post<StartSessionResponse>('/workouts/sessions', payload);
+    return data;
+  },
+
   logSet: async (
     sessionId: string,
     exerciseId: string,
-    reps: number,
-    weightKg: number,
-    restSeconds: number = 0,
-  ): Promise<LogSetResponse> => {
-    const { data } = await apiClient.post<LogSetResponse>(
+    setData: SetLogRequest
+  ): Promise<SetLogResponse> => {
+    const { data } = await apiClient.post<SetLogResponse>(
       `/workouts/sessions/${sessionId}/sets`,
       {
         exercise_id: exerciseId,
-        reps,
-        weight_kg: weightKg,
-        rest_seconds: restSeconds,
-      },
+        reps: setData.reps,
+        weight_kg: setData.weight_kg,
+        rest_seconds: setData.rest_seconds ?? 0,
+      }
     );
     return data;
   },
 
-  /** Complete a session and get XP results */
   completeSession: async (sessionId: string): Promise<CompleteSessionResponse> => {
     const { data } = await apiClient.patch<CompleteSessionResponse>(
       `/workouts/sessions/${sessionId}`,
-      { status: 'completed' },
+      { status: 'completed' }
     );
     return data;
   },
