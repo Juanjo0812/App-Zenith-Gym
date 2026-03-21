@@ -13,6 +13,7 @@ export interface UserProfile {
   email: string;
   level: number;
   total_xp: number;
+  roles: string[];
   created_at: string;
   updated_at?: string | null;
 }
@@ -49,6 +50,7 @@ interface ApiUserProfile {
   address: string | null;
   profile_image_url: string | null;
   avatar_url: string | null;
+  roles: string[];
   phone_number: string | null;
   phone: string | null;
 }
@@ -125,6 +127,7 @@ const buildFallbackProfile = (user: SignedInUser): UserProfile => {
     email: user.email ?? '',
     level: 1,
     total_xp: 0,
+    roles: [],
     created_at: user.created_at ?? new Date().toISOString(),
     updated_at: null,
   };
@@ -145,6 +148,7 @@ const mapProfile = (profile: ApiUserProfile, user: SignedInUser): UserProfile =>
     email: user.email ?? profile.email ?? '',
     level: profile.level ?? fallback.level,
     total_xp: profile.total_xp ?? fallback.total_xp,
+    roles: profile.roles ?? fallback.roles,
     created_at: profile.created_at ?? fallback.created_at,
     updated_at: profile.updated_at ?? null,
   };

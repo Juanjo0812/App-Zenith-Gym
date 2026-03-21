@@ -11,8 +11,10 @@ from src.infrastructure.database.base import get_session
 from src.infrastructure.database.models import (
     MealLogModel,
     MealPlanModel,
+    RoleModel,
     SetLogModel,
     UserModel,
+    UserRoleModel,
     WorkoutRoutineModel,
     WorkoutSessionModel,
 )
@@ -27,6 +29,7 @@ class UserProfileResponse(BaseModel):
     email: str | None = None
     level: int
     total_xp: int
+    roles: list[str] = []
     created_at: datetime | None = None
     updated_at: datetime | None = None
     address: str | None = None
@@ -127,7 +130,20 @@ async def _load_user_model(session: AsyncSession, user_id: UUID) -> UserModel:
     return result.scalar_one()
 
 
-def _profile_response(db_user: UserModel, current_user: AuthenticatedUser) -> UserProfileResponse:
+async def _get_user_roles(session: AsyncSession, user_id: UUID) -> list[str]:
+    result = await session.execute(
+        select(RoleModel.name)
+        .join(UserRoleModel, UserRoleModel.role_id == RoleModel.id)
+        .where(UserRoleModel.user_id == user_id)
+    )
+    return [row for row in result.scalars().all()]
+
+
+def _profile_response(
+    db_user: UserModel,
+    current_user: AuthenticatedUser,
+    roles: list[str] = None
+) -> UserProfileResponse:
     metadata_name = _metadata_value(current_user, "name", "full_name", "display_name")
     metadata_username = _metadata_value(current_user, "username")
     metadata_phone = _metadata_value(current_user, "phone")
@@ -143,6 +159,7 @@ def _profile_response(db_user: UserModel, current_user: AuthenticatedUser) -> Us
         email=current_user.email,
         level=db_user.level or 1,
         total_xp=db_user.total_xp or 0,
+        roles=roles or [],
         created_at=db_user.created_at,
         updated_at=db_user.updated_at,
         address=db_user.address,
@@ -159,7 +176,8 @@ async def get_my_profile(
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     db_user = await _load_user_model(session, current_user.id)
-    return _profile_response(db_user, current_user)
+    roles = await _get_user_roles(session, current_user.id)
+    return _profile_response(db_user, current_user, roles)
 
 
 @router.get("/me/dashboard", response_model=UserDashboardResponse)
@@ -282,6 +300,7 @@ async def update_my_profile(
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     db_user = await _load_user_model(session, current_user.id)
+    roles = await _get_user_roles(session, current_user.id)
 
     phone_number = payload.phone_number if payload.phone_number is not None else payload.phone
     profile_image_url = (
@@ -303,4 +322,4 @@ async def update_my_profile(
     await session.commit()
     await session.refresh(db_user)
 
-    return _profile_response(db_user, current_user)
+    return _profile_response(db_user, current_user, roles)

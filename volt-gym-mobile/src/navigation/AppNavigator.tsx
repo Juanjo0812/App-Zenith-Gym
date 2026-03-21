@@ -8,6 +8,7 @@ import BottomTabNavigator from './BottomTabNavigator';
 import NutritionScreen from '../screens/NutritionScreen';
 import ExerciseListScreen from '../screens/ExerciseListScreen';
 import ActiveWorkoutScreen from '../screens/ActiveWorkoutScreen';
+import ClassesScreen from '../screens/ClassesScreen';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -17,6 +18,7 @@ export type RootStackParamList = {
   Nutrition: undefined;
   ExerciseList: { sessionId?: string } | undefined;
   ActiveWorkout: { sessionId?: string; addExercise?: any } | undefined;
+  Classes: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -55,6 +57,7 @@ const AppNavigator = () => {
         component={ActiveWorkoutScreen}
         options={{ gestureEnabled: false }}
       />
+      <Stack.Screen name="Classes" component={ClassesScreen} />
     </Stack.Navigator>
   );
 };

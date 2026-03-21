@@ -167,3 +167,52 @@ class RecoveryLogModel(Base):
     source = Column(String(50)) # 'manual', 'healthkit', 'health_connect'
 
     user = relationship("UserModel", back_populates="recovery_logs")
+
+
+class ClassTypeModel(Base):
+    __tablename__ = "class_types"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), unique=True, nullable=False)
+    description = Column(String, nullable=True)
+    color = Column(String(7), default="#FF4500")
+    icon = Column(String(50), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    scheduled_classes = relationship("ScheduledClassModel", back_populates="class_type", cascade="all, delete-orphan")
+
+
+class ScheduledClassModel(Base):
+    __tablename__ = "scheduled_classes"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    class_type_id = Column(UUID(as_uuid=True), ForeignKey("class_types.id", ondelete="CASCADE"), nullable=False)
+    instructor_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    scheduled_date = Column(Date, nullable=False)
+    start_time = Column(String(5), nullable=False)  # HH:MM format
+    end_time = Column(String(5), nullable=False)
+    max_capacity = Column(Integer, default=20)
+    location = Column(String(255), default="Sala principal")
+    notes = Column(String, nullable=True)
+    is_cancelled = Column(Boolean, default=False)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    class_type = relationship("ClassTypeModel", back_populates="scheduled_classes")
+    instructor = relationship("UserModel", foreign_keys=[instructor_id])
+    creator = relationship("UserModel", foreign_keys=[created_by])
+    enrollments = relationship("ClassEnrollmentModel", back_populates="scheduled_class", cascade="all, delete-orphan")
+
+
+class ClassEnrollmentModel(Base):
+    __tablename__ = "class_enrollments"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    scheduled_class_id = Column(UUID(as_uuid=True), ForeignKey("scheduled_classes.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    enrolled_at = Column(DateTime, default=datetime.utcnow)
+    status = Column(String(20), default="enrolled")  # 'enrolled', 'cancelled', 'attended'
+
+    scheduled_class = relationship("ScheduledClassModel", back_populates="enrollments")
+    user = relationship("UserModel")
+

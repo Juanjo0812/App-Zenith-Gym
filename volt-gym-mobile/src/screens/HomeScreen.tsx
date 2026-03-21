@@ -2,16 +2,21 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { userService, UserProfile, UserDashboard, getXpForNextLevel, getXpProgress } from '../services/userService';
+import { classesApi, ScheduledClass } from '../features/classes/api/classesApi';
 
 type Props = BottomTabScreenProps<any, 'Home'>;
 
 const HomeScreen = ({ navigation }: Props) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [dashboard, setDashboard] = useState<UserDashboard | null>(null);
+  const [upcomingClasses, setUpcomingClasses] = useState<ScheduledClass[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const stackNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const loadData = useCallback(async () => {
     try {
@@ -21,6 +26,19 @@ const HomeScreen = ({ navigation }: Props) => {
       ]);
       setProfile(profileData);
       setDashboard(dashboardData);
+
+      // Load today's and tomorrow's classes silently
+      try {
+        const today = new Date();
+        const endDate = new Date(today);
+        endDate.setDate(today.getDate() + 2);
+        const from = today.toISOString().split('T')[0];
+        const to = endDate.toISOString().split('T')[0];
+        const classes = await classesApi.getSchedule(from, to);
+        setUpcomingClasses(classes.filter((c) => !c.is_cancelled).slice(0, 3));
+      } catch {
+        // Classes feature may not be available yet — silently ignore
+      }
     } catch (err) {
       console.error('Error cargando datos del home:', err);
     } finally {
@@ -84,6 +102,53 @@ const HomeScreen = ({ navigation }: Props) => {
               : '¡Bienvenido! Empieza tu primer entrenamiento hoy.'}
           </Text>
         </View>
+
+        {/* Upcoming Classes Section */}
+        <TouchableOpacity
+          style={[styles.card, styles.classesCard]}
+          onPress={() => stackNavigation.navigate('Classes')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.cardHeaderRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <MaterialIcons name="event" size={24} color="#7C4DFF" />
+              <Text style={styles.cardTitle}>Clases grupales</Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color="#A0A0B8" />
+          </View>
+
+          {upcomingClasses.length > 0 ? (
+            <View style={styles.classesPreview}>
+              {upcomingClasses.map((classItem) => (
+                <View key={classItem.id} style={styles.classPreviewItem}>
+                  <View
+                    style={[styles.classPreviewDot, { backgroundColor: classItem.class_type.color }]}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.classPreviewName}>{classItem.class_type.name}</Text>
+                    <Text style={styles.classPreviewTime}>
+                      {classItem.scheduled_date} · {classItem.start_time} — {classItem.end_time}
+                    </Text>
+                  </View>
+                  <View style={styles.classPreviewCapacity}>
+                    <Text style={styles.classPreviewCount}>
+                      {classItem.enrolled_count}/{classItem.max_capacity}
+                    </Text>
+                  </View>
+                  {classItem.is_enrolled && (
+                    <View style={styles.enrolledBadge}>
+                      <MaterialIcons name="check-circle" size={16} color="#4CAF50" />
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.classesEmptyText}>
+              Toca aquí para ver la programación de clases
+            </Text>
+          )}
+        </TouchableOpacity>
 
         {/* Stats Grid */}
         <View style={styles.grid}>
@@ -177,6 +242,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 69, 0, 0.3)',
     backgroundColor: '#1A0F0A',
   },
+  classesCard: {
+    borderColor: 'rgba(124, 77, 255, 0.3)',
+    backgroundColor: '#0F0A1A',
+  },
   cardHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -239,7 +308,53 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#A0A0B8',
     marginTop: 8,
-  }
+  },
+
+  // Classes Preview
+  classesPreview: {
+    gap: 10,
+  },
+  classPreviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1A1A2E',
+  },
+  classPreviewDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  classPreviewName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  classPreviewTime: {
+    fontSize: 12,
+    color: '#A0A0B8',
+    marginTop: 2,
+  },
+  classPreviewCapacity: {
+    backgroundColor: '#1A1A2E',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  classPreviewCount: {
+    fontSize: 11,
+    color: '#A0A0B8',
+    fontWeight: '600',
+  },
+  enrolledBadge: {
+    marginLeft: 4,
+  },
+  classesEmptyText: {
+    fontSize: 14,
+    color: '#A0A0B8',
+  },
 });
 
 export default HomeScreen;

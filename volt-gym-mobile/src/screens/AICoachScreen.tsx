@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -11,12 +12,80 @@ import {
   View,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import apiClient from '../shared/api/apiClient';
 
-import { MOCK_CHAT } from '../data/mockData';
+type ChatMsg = {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  time: string;
+};
+
+const WELCOME_MESSAGE: ChatMsg = {
+  id: 'welcome',
+  role: 'assistant',
+  text: '¡Hola! Soy VOLT Coach, tu entrenador personal con IA. 💪\n\nPuedes preguntarme sobre:\n• Técnica de ejercicios\n• Rutinas de entrenamiento\n• Nutrición y suplementación\n• Recuperación y descanso\n\n¿En qué puedo ayudarte hoy?',
+  time: '',
+};
 
 const AICoachScreen = () => {
+  const [messages, setMessages] = useState<ChatMsg[]>([WELCOME_MESSAGE]);
   const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  const formatTime = () => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  const sendMessage = async () => {
+    const text = message.trim();
+    if (!text || sending) return;
+
+    const userMsg: ChatMsg = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      text,
+      time: formatTime(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setMessage('');
+    setSending(true);
+
+    try {
+      // Build history for context (excluding welcome message)
+      const history = messages
+        .filter((m) => m.id !== 'welcome')
+        .map((m) => ({ role: m.role, content: m.text }));
+
+      const { data } = await apiClient.post<{ reply: string; model: string }>('/ai/chat-messages', {
+        message: text,
+        history,
+      });
+
+      const aiMsg: ChatMsg = {
+        id: `ai-${Date.now()}`,
+        role: 'assistant',
+        text: data.reply,
+        time: formatTime(),
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+    } catch (err: any) {
+      const errorDetail = err?.response?.data?.detail || 'Error al comunicarse con el entrenador';
+      const errorMsg: ChatMsg = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        text: `⚠️ ${errorDetail}`,
+        time: formatTime(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -37,7 +106,7 @@ const AICoachScreen = () => {
           contentContainerStyle={styles.scrollContent}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          {MOCK_CHAT.map((msg) => {
+          {messages.map((msg) => {
             const isUser = msg.role === 'user';
             return (
               <View
@@ -62,19 +131,30 @@ const AICoachScreen = () => {
                   <Text style={[styles.messageText, isUser && styles.messageTextUser]}>
                     {msg.text}
                   </Text>
-                  <Text style={[styles.messageTime, isUser && styles.messageTimeUser]}>
-                    {msg.time}
-                  </Text>
+                  {msg.time ? (
+                    <Text style={[styles.messageTime, isUser && styles.messageTimeUser]}>
+                      {msg.time}
+                    </Text>
+                  ) : null}
                 </View>
               </View>
             );
           })}
+
+          {sending && (
+            <View style={[styles.messageWrapper, styles.messageWrapperAI]}>
+              <View style={styles.aiAvatar}>
+                <MaterialIcons name="smart-toy" size={16} color="#FFFFFF" />
+              </View>
+              <View style={[styles.messageBubble, styles.messageBubbleAI, styles.typingBubble]}>
+                <ActivityIndicator size="small" color="#FF4500" />
+                <Text style={styles.typingText}>Escribiendo...</Text>
+              </View>
+            </View>
+          )}
         </ScrollView>
 
         <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.attachButton}>
-            <MaterialIcons name="add" size={24} color="#A0A0B8" />
-          </TouchableOpacity>
           <TextInput
             style={styles.input}
             placeholder="Pregúntale a tu entrenador..."
@@ -82,14 +162,18 @@ const AICoachScreen = () => {
             value={message}
             onChangeText={setMessage}
             multiline
+            editable={!sending}
+            onSubmitEditing={sendMessage}
           />
           <TouchableOpacity
-            style={[styles.sendButton, message.trim().length > 0 && styles.sendButtonActive]}
+            style={[styles.sendButton, message.trim().length > 0 && !sending && styles.sendButtonActive]}
+            onPress={sendMessage}
+            disabled={!message.trim() || sending}
           >
             <MaterialIcons
               name="send"
               size={20}
-              color={message.trim().length > 0 ? '#FFFFFF' : '#888888'}
+              color={message.trim().length > 0 && !sending ? '#FFFFFF' : '#888888'}
             />
           </TouchableOpacity>
         </View>
@@ -157,6 +241,7 @@ const styles = StyleSheet.create({
   messageBubble: {
     padding: 14,
     borderRadius: 18,
+    flexShrink: 1,
   },
   messageBubbleUser: {
     backgroundColor: '#FF4500',
@@ -186,6 +271,16 @@ const styles = StyleSheet.create({
   messageTimeUser: {
     color: 'rgba(255, 255, 255, 0.7)',
   },
+  typingBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  typingText: {
+    fontSize: 13,
+    color: '#A0A0B8',
+    fontStyle: 'italic',
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -194,10 +289,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F0F23',
     borderTopWidth: 1,
     borderTopColor: '#1A1A2E',
-  },
-  attachButton: {
-    padding: 8,
-    marginRight: 4,
   },
   input: {
     flex: 1,
