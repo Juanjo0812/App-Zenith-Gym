@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, Dimensions, Animated, Easing } from 'react-nati
 import Svg, { Circle, Path, Line, G } from 'react-native-svg';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { supabase } from '../lib/supabase';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -224,9 +225,15 @@ const SplashScreen = ({ navigation }: Props) => {
       toValue: 100, duration: 3800, easing: Easing.out(Easing.cubic), useNativeDriver: false,
     }).start(({ finished }) => {
       if (finished) {
-        setTimeout(() => {
-          navigation.replace('Login');
-        }, 400); // Give it a small delay at 100% before transitioning
+        setTimeout(async () => {
+          // Check if user already has an active session
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            navigation.replace('Main');
+          } else {
+            navigation.replace('Login');
+          }
+        }, 400);
       }
     });
 

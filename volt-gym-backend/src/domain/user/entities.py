@@ -1,24 +1,18 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
-from uuid import UUID, uuid4
-
-class UserLevel(BaseModel):
-    level: int = 1
-    total_xp: int = 0
+from uuid import UUID
 
 class UserEntity(BaseModel):
-    """Core domain entity for a User"""
-    id: UUID = Field(default_factory=uuid4)
-    email: EmailStr
-    name: str
-    level: UserLevel = Field(default_factory=UserLevel)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    """Minimal user aggregate used by the training core."""
+    id: UUID
+    name: Optional[str] = None
+    level: int = Field(default=1, ge=1)
+    total_xp: int = Field(default=0, ge=0)
 
-    def award_xp(self, xp: int) -> bool:
+    def award_xp(self, xp: int, xp_per_level: int = 500) -> bool:
         """Business rule: Add XP. Returns True if leveled up."""
-        self.level.total_xp += xp
-        new_level = int((self.level.total_xp / 100) ** 0.5) + 1
-        has_leveled_up = new_level > self.level.level
-        self.level.level = new_level
+        self.total_xp += xp
+        new_level = max(1, (self.total_xp // xp_per_level) + 1)
+        has_leveled_up = new_level > self.level
+        self.level = new_level
         return has_leveled_up

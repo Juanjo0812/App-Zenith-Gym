@@ -22,7 +22,7 @@ const NutritionScreen = () => {
         >
           <MaterialIcons name="close" size={28} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nutrición de Hoy</Text>
+        <Text style={styles.headerTitle}>Nutrición de hoy</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -61,7 +61,7 @@ const NutritionScreen = () => {
             <Text style={styles.macroTarget}>/ {MOCK_NUTRITION.macros.protein.target}g</Text>
           </View>
           <View style={styles.macroBox}>
-            <Text style={styles.macroLabel}>Carbs</Text>
+            <Text style={styles.macroLabel}>Carbohidratos</Text>
             <Text style={[styles.macroValue, { color: '#00E676' }]}>{MOCK_NUTRITION.macros.carbs.current}g</Text>
             <Text style={styles.macroTarget}>/ {MOCK_NUTRITION.macros.carbs.target}g</Text>
           </View>
@@ -310,5 +310,4 @@ const styles = StyleSheet.create({
 });
 
 export default NutritionScreen;
-
 

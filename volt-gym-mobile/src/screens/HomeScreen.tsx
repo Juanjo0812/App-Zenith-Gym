@@ -1,14 +1,50 @@
-import React from 'react';
-import { StyleSheet, View, Text, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, View, Text, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { RootStackParamList } from '../navigation/AppNavigator';
-import { MOCK_USER, MOCK_DASHBOARD } from '../data/mockData';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { userService, UserProfile, UserDashboard, getXpForNextLevel, getXpProgress } from '../services/userService';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Main'>;
+type Props = BottomTabScreenProps<any, 'Home'>;
 
 const HomeScreen = ({ navigation }: Props) => {
-  const xpProgress = (MOCK_USER.xp / MOCK_USER.xpNextLevel) * 100;
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [dashboard, setDashboard] = useState<UserDashboard | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [profileData, dashboardData] = await Promise.all([
+        userService.getProfile(),
+        userService.getDashboard(),
+      ]);
+      setProfile(profileData);
+      setDashboard(dashboardData);
+    } catch (err) {
+      console.error('Error cargando datos del home:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Refresh data when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
+
+  if (loading || !profile) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#FF4500" style={{ flex: 1 }} />
+      </SafeAreaView>
+    );
+  }
+
+  const xpNextLevel = getXpForNextLevel(profile.level);
+  const xpProgressPercent = getXpProgress(profile.total_xp, profile.level);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -18,21 +54,21 @@ const HomeScreen = ({ navigation }: Props) => {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Hola,</Text>
-            <Text style={styles.userName}>{MOCK_USER.name}</Text>
+            <Text style={styles.userName}>{profile.username || profile.name}</Text>
           </View>
           <View style={styles.levelBadge}>
-            <Text style={styles.levelText}>LVL {MOCK_USER.level}</Text>
+            <Text style={styles.levelText}>Nivel {profile.level}</Text>
           </View>
         </View>
 
         {/* Level & XP Progress Card */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardTitle}>Progreso de Nivel</Text>
-            <Text style={styles.xpText}>{MOCK_USER.xp} / {MOCK_USER.xpNextLevel} XP</Text>
+            <Text style={styles.cardTitle}>Progreso de nivel</Text>
+            <Text style={styles.xpText}>{profile.total_xp} / {xpNextLevel} XP</Text>
           </View>
           <View style={styles.progressBarBackground}>
-            <View style={[styles.progressBarFill, { width: `${xpProgress}%` }]} />
+            <View style={[styles.progressBarFill, { width: `${xpProgressPercent}%` }]} />
           </View>
         </View>
 
@@ -40,9 +76,13 @@ const HomeScreen = ({ navigation }: Props) => {
         <View style={[styles.card, styles.highlightCard]}>
           <View style={styles.cardHeaderRow}>
             <MaterialIcons name="auto-awesome" size={20} color="#FF4500" />
-            <Text style={styles.highlightTitle}>Coach AI</Text>
+            <Text style={styles.highlightTitle}>Entrenador con IA</Text>
           </View>
-          <Text style={styles.recommendationText}>{MOCK_DASHBOARD.recommendation}</Text>
+          <Text style={styles.recommendationText}>
+            {dashboard?.lastWorkout
+              ? `Tu último entreno fue ${dashboard.lastWorkout.date.toLowerCase()}. ¡Sigue con esa constancia!`
+              : '¡Bienvenido! Empieza tu primer entrenamiento hoy.'}
+          </Text>
         </View>
 
         {/* Stats Grid */}
@@ -50,14 +90,18 @@ const HomeScreen = ({ navigation }: Props) => {
           {/* Last Workout */}
           <View style={[styles.card, styles.gridItem]}>
             <MaterialIcons name="history" size={24} color="#A0A0B8" />
-            <Text style={styles.gridValue}>{MOCK_DASHBOARD.lastWorkout.date}</Text>
-            <Text style={styles.gridLabel}>{MOCK_DASHBOARD.lastWorkout.name}</Text>
+            <Text style={styles.gridValue}>
+              {dashboard?.lastWorkout?.date ?? '—'}
+            </Text>
+            <Text style={styles.gridLabel}>
+              {dashboard?.lastWorkout?.name ?? 'Sin entrenos aún'}
+            </Text>
           </View>
 
           {/* Weekly Workouts */}
           <View style={[styles.card, styles.gridItem]}>
             <MaterialIcons name="event-available" size={24} color="#A0A0B8" />
-            <Text style={styles.gridValue}>{MOCK_DASHBOARD.weeklyCount}</Text>
+            <Text style={styles.gridValue}>{dashboard?.weeklyCount ?? 0}</Text>
             <Text style={styles.gridLabel}>Entrenos esta sem.</Text>
           </View>
         </View>
@@ -71,12 +115,14 @@ const HomeScreen = ({ navigation }: Props) => {
           <View style={styles.cardHeaderRow}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <MaterialIcons name="restaurant" size={24} color="#00E676" />
-              <Text style={styles.cardTitle}>Nutrición de Hoy</Text>
+              <Text style={styles.cardTitle}>Nutrición de hoy</Text>
             </View>
             <MaterialIcons name="chevron-right" size={24} color="#A0A0B8" />
           </View>
           <Text style={styles.macroText}>
-            {MOCK_DASHBOARD.calories.consumed} kcal consumidas de {MOCK_DASHBOARD.calories.target} kcal
+            {dashboard?.todayCalories.target
+              ? `${dashboard.todayCalories.consumed} kcal consumidas de ${dashboard.todayCalories.target} kcal`
+              : 'No tienes un plan de nutrición configurado aún'}
           </Text>
         </TouchableOpacity>
 
@@ -197,4 +243,3 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
-

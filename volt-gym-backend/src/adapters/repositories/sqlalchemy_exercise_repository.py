@@ -16,7 +16,7 @@ class SQLAlchemyExerciseRepository:
         muscle: Optional[str] = None,
         equipment: Optional[str] = None,
     ) -> List[ExerciseEntity]:
-        query = select(ExerciseModel)
+        query = select(ExerciseModel).where(ExerciseModel.is_public.is_(True))
 
         if muscle:
             query = query.where(ExerciseModel.primary_muscle.ilike(f"%{muscle}%"))

@@ -3,13 +3,14 @@ import { StyleSheet, View, Text, SafeAreaView, ScrollView, TouchableOpacity, Ale
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoutines } from '../context/RoutineContext';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import ScaleTouchable from '../shared/ui/ScaleTouchable';
 
 type Props = {
   navigation: any; // Using any for quick integration, ideally use BottomTabNavigationProp combined with NativeStackNavigationProp
 };
 
 const WorkoutsScreen = ({ navigation }: Props) => {
-  const { routines, deleteRoutine, deleteExerciseFromRoutine, updateRoutine, updateExerciseInRoutine } = useRoutines();
+  const { routines, deleteRoutine, deleteExerciseFromRoutine, updateRoutineName, updateExerciseInRoutine } = useRoutines();
   const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(routines.length > 0 ? routines[0].id : null);
 
   // States for editing routine name
@@ -45,7 +46,7 @@ const WorkoutsScreen = ({ navigation }: Props) => {
 
   const saveEditedRoutine = () => {
     if (editingRoutineId && editedRoutineName.trim()) {
-      updateRoutine(editingRoutineId, editedRoutineName.trim());
+      updateRoutineName(editingRoutineId, editedRoutineName.trim());
       setEditingRoutineId(null);
     }
   };
@@ -166,13 +167,13 @@ const WorkoutsScreen = ({ navigation }: Props) => {
                     </View>
                   ))}
 
-                  <TouchableOpacity 
+                  <ScaleTouchable 
                     style={styles.startWorkoutButton}
                     onPress={() => navigation.navigate('ActiveWorkout')}
                   >
                     <Text style={styles.startWorkoutText}>Iniciar Entreno</Text>
                     <MaterialIcons name="play-arrow" size={20} color="#000" />
-                  </TouchableOpacity>
+                  </ScaleTouchable>
                 </View>
               )}
             </View>
@@ -207,9 +208,9 @@ const WorkoutsScreen = ({ navigation }: Props) => {
                   <TouchableOpacity onPress={() => setEditingRoutineId(null)} style={styles.modalBtn}>
                     <Text style={styles.modalBtnText}>Cancelar</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={saveEditedRoutine} style={[styles.modalBtn, styles.modalBtnPrimary]}>
+                  <ScaleTouchable onPress={saveEditedRoutine} style={[styles.modalBtn, styles.modalBtnPrimary]}>
                     <Text style={[styles.modalBtnText, styles.modalBtnTextPrimary]}>Guardar</Text>
-                  </TouchableOpacity>
+                  </ScaleTouchable>
                 </View>
               </View>
             </KeyboardAvoidingView>
@@ -259,9 +260,9 @@ const WorkoutsScreen = ({ navigation }: Props) => {
                   <TouchableOpacity onPress={() => setEditingExercise(null)} style={styles.modalBtn}>
                     <Text style={styles.modalBtnText}>Cancelar</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={saveEditedExercise} style={[styles.modalBtn, styles.modalBtnPrimary]}>
+                  <ScaleTouchable onPress={saveEditedExercise} style={[styles.modalBtn, styles.modalBtnPrimary]}>
                     <Text style={[styles.modalBtnText, styles.modalBtnTextPrimary]}>Guardar</Text>
-                  </TouchableOpacity>
+                  </ScaleTouchable>
                 </View>
               </View>
             </KeyboardAvoidingView>
@@ -495,4 +496,3 @@ const styles = StyleSheet.create({
 });
 
 export default WorkoutsScreen;
-

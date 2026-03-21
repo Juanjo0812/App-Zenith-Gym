@@ -1,21 +1,31 @@
 import axios from 'axios';
-import { Platform } from 'react-native';
 
-/**
- * Android Emulator uses 10.0.2.2 to reach host machine.
- * iOS Simulator uses localhost.
- * Physical devices (Expo Go) need the machine's local IP address.
- */
-const BASE_URL = Platform.select({
-  android: 'http://10.0.2.2:8000/api/v1',
-  ios: 'http://192.168.1.95:8000/api/v1', // Using your machine's local IP
-  default: 'http://192.168.1.95:8000/api/v1', 
-});
+import { supabase } from '../../lib/supabase';
+
+const baseURL = process.env.EXPO_PUBLIC_API_URL;
+
+if (!baseURL) {
+  throw new Error(
+    'Falta la variable de entorno EXPO_PUBLIC_API_URL. Revisa tu archivo .env'
+  );
+}
 
 const apiClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000,
+});
+
+apiClient.interceptors.request.use(async (config) => {
+  const { data } = await supabase.auth.getSession();
+  const accessToken = data.session?.access_token;
+
+  if (accessToken) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  return config;
 });
 
 export default apiClient;

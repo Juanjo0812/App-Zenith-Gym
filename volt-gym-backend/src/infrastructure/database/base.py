@@ -1,11 +1,12 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import MetaData
-import os
+from src.config.settings import get_settings
 
-DATABASE_URL = os.getenv("DB_URL", "postgresql+asyncpg://postgres:postgres@localhost/voltgym")
+settings = get_settings()
+DATABASE_URL = settings.db_url
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(settings.db_url, echo=settings.db_echo, pool_pre_ping=True)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 class Base(DeclarativeBase):

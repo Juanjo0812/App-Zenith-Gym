@@ -7,17 +7,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { workoutApi, Exercise } from '../features/workouts/api/workoutApi';
 import { useRoutines } from '../context/RoutineContext';
-
-const MUSCLE_FILTERS = [
-  { id: 'Todos', label: 'Todos' },
-  { id: 'Pecho', label: 'Pecho' },
-  { id: 'Espalda', label: 'Espalda' },
-  { id: 'Hombros', label: 'Hombros' },
-  { id: 'Piernas', label: 'Piernas' },
-  { id: 'Bíceps', label: 'Bíceps' },
-  { id: 'Tríceps', label: 'Tríceps' },
-  { id: 'Core', label: 'Core' },
-];
+import ScaleTouchable from '../shared/ui/ScaleTouchable';
 
 // Static image mapping for React Native
 const EXERCISE_IMAGES: Record<string, any> = {
@@ -46,6 +36,7 @@ interface Props {
 
 const ExerciseListScreen = ({ navigation, route }: Props) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [muscleFilters, setMuscleFilters] = useState<{ id: string; label: string }[]>([{ id: 'Todos', label: 'Todos' }]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeMuscle, setActiveMuscle] = useState('Todos');
@@ -61,6 +52,23 @@ const ExerciseListScreen = ({ navigation, route }: Props) => {
   const { addExerciseToRoutine } = useRoutines();
 
   const sessionId: string | undefined = route.params?.sessionId;
+
+  // Load muscle filters from DB on mount
+  useEffect(() => {
+    const loadFilters = async () => {
+      try {
+        const muscles = await workoutApi.getMuscleGroups();
+        const filters = [
+          { id: 'Todos', label: 'Todos' },
+          ...muscles.map((m) => ({ id: m, label: m.charAt(0).toUpperCase() + m.slice(1) }))
+        ];
+        setMuscleFilters(filters);
+      } catch (err) {
+        console.error('Error cargando filtros:', err);
+      }
+    };
+    loadFilters();
+  }, []);
 
   useEffect(() => {
     fetchExercises();
@@ -111,23 +119,28 @@ const ExerciseListScreen = ({ navigation, route }: Props) => {
     }
   };
 
-  const confirmAddToRoutine = () => {
+  const confirmAddToRoutine = async () => {
     if (!routineName.trim() || !selectedExercise) {
       Alert.alert('Error', 'Por favor, ingresa el nombre de la rutina.');
       return;
     }
 
-    addExerciseToRoutine(
-      routineName,
-      selectedExercise.name,
-      selectedExercise.primary_muscle,
-      Number(weightVal) || 0,
-      Number(repsCount) || 10,
-      Number(setsCount) || 3
-    );
-
-    Alert.alert('Éxito', `${selectedExercise.name} se añadió a la rutina "${routineName}".`);
-    closeModal();
+    try {
+      await addExerciseToRoutine(
+        null, // No routine ID for new exercise to a potentially new routine, logic in context handles it by name
+        routineName,
+        selectedExercise.id,
+        selectedExercise.name,
+        selectedExercise.primary_muscle,
+        Number(weightVal) || 0,
+        Number(repsCount) || 10,
+        Number(setsCount) || 3
+      );
+      Alert.alert('Éxito', `${selectedExercise.name} se añadió a la rutina "${routineName}".`);
+      closeModal();
+    } catch (e) {
+      Alert.alert('Error', 'Hubo un problema al añadir el ejercicio');
+    }
   };
 
   const renderExercise = ({ item }: { item: Exercise }) => (
@@ -185,7 +198,7 @@ const ExerciseListScreen = ({ navigation, route }: Props) => {
       <View style={styles.filterWrapper}>
         <FlatList
           horizontal
-          data={MUSCLE_FILTERS}
+          data={muscleFilters}
           keyExtractor={(item) => item.id}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterRow}
@@ -321,18 +334,18 @@ const ExerciseListScreen = ({ navigation, route }: Props) => {
                         </View>
                       </View>
 
-                      <TouchableOpacity style={styles.confirmButton} onPress={confirmAddToRoutine}>
+                      <ScaleTouchable style={styles.confirmButton} onPress={confirmAddToRoutine}>
                         <Text style={styles.confirmButtonText}>Añadir a rutina</Text>
-                      </TouchableOpacity>
+                      </ScaleTouchable>
                     </View>
                   )}
                 </ScrollView>
               </KeyboardAvoidingView>
 
               {!showConfigForm && (
-                <TouchableOpacity style={styles.addButton} onPress={addExerciseToWorkout}>
+                <ScaleTouchable style={styles.addButton} onPress={addExerciseToWorkout}>
                   <MaterialIcons name="add" size={28} color="#000" />
-                </TouchableOpacity>
+                </ScaleTouchable>
               )}
             </View>
           )}

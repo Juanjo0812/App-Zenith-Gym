@@ -148,7 +148,7 @@ const ProgressScreen = () => {
               </View>
               <View style={styles.statBox}>
                 <Text style={styles.statValue}>{MOCK_USER.stats.prs}</Text>
-                <Text style={styles.statLabel}>Total PRs</Text>
+                <Text style={styles.statLabel}>Récords totales</Text>
               </View>
             </View>
           </View>
@@ -450,4 +450,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProgressScreen;
-

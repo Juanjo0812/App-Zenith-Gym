@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any
 
-router = APIRouter(prefix="/ai", tags=["AI Coach"])
+router = APIRouter(prefix="/ai", tags=["Entrenador con IA"])
 
 class GenerateWorkoutRequest(BaseModel):
     goals: str
@@ -20,10 +20,10 @@ async def create_workout_plan(req: GenerateWorkoutRequest) -> Dict[str, Any]:
     return {
         "status": "success",
         "routine": {
-            "name": f"AI {req.level.capitalize()} {req.goals.capitalize()} Routine",
+            "name": f"Rutina con IA {req.level.capitalize()} {req.goals.capitalize()}",
             "exercises": [
-                {"name": "Bench Press", "sets": 4, "reps": 8},
-                {"name": "Squat", "sets": 3, "reps": 10}
+                {"name": "Press de banca", "sets": 4, "reps": 8},
+                {"name": "Sentadilla con barra", "sets": 3, "reps": 10}
             ]
         }
     }
@@ -37,5 +37,5 @@ async def create_chat_message(chat: ChatMessage):
     Conversational endpoint for the fitness coach (e.g. streaming LLM).
     """
     return {
-        "reply": f"As your coach, I recommend focusing on form for '{chat.message}'."
+        "reply": f"Como tu entrenador, te recomiendo enfocarte en la técnica para '{chat.message}'."
     }

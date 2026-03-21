@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, Date, ARRAY, JSON, Numeric
+from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, Date, ARRAY, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -8,18 +8,55 @@ from .base import Base
 class UserModel(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email = Column(String(255), unique=True, nullable=False)
-    name = Column(String(255), nullable=False)
+    # UUID provided externally by Supabase Auth
+    id = Column(UUID(as_uuid=True), primary_key=True)
+    name = Column(String(255), nullable=True) # Optional upon signup
+    profile_image_url = Column(String, nullable=True)
+    phone_number = Column(String(50), nullable=True)
+    address = Column(String, nullable=True)
     level = Column(Integer, default=1)
     total_xp = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
+    roles = relationship("UserRoleModel", back_populates="user", cascade="all, delete-orphan")
+    coach_relationships = relationship("CoachClientModel", foreign_keys="[CoachClientModel.coach_id]", back_populates="coach", cascade="all, delete-orphan")
+    client_relationships = relationship("CoachClientModel", foreign_keys="[CoachClientModel.client_id]", back_populates="client", cascade="all, delete-orphan")
+    
+    workout_routines = relationship("WorkoutRoutineModel", back_populates="user")
     workout_sessions = relationship("WorkoutSessionModel", back_populates="user")
     meal_plans = relationship("MealPlanModel", back_populates="user")
     meals_logged = relationship("MealLogModel", back_populates="user")
     recovery_logs = relationship("RecoveryLogModel", back_populates="user")
+    created_exercises = relationship("ExerciseModel", back_populates="creator")
+
+class RoleModel(Base):
+    __tablename__ = "roles"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(50), unique=True, nullable=False)
+
+    users = relationship("UserRoleModel", back_populates="role")
+
+class UserRoleModel(Base):
+    __tablename__ = "user_roles"
+
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True)
+
+    user = relationship("UserModel", back_populates="roles")
+    role = relationship("RoleModel", back_populates="users")
+
+class CoachClientModel(Base):
+    __tablename__ = "coach_clients"
+
+    coach_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    client_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    coach = relationship("UserModel", foreign_keys=[coach_id], back_populates="coach_relationships")
+    client = relationship("UserModel", foreign_keys=[client_id], back_populates="client_relationships")
 
 class ExerciseModel(Base):
     __tablename__ = "exercises"
@@ -32,35 +69,57 @@ class ExerciseModel(Base):
     difficulty = Column(String(50))
     instructions = Column(String)
     video_url = Column(String)
+    
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    is_public = Column(Boolean, default=True)
+
+    creator = relationship("UserModel", back_populates="created_exercises")
 
 class WorkoutRoutineModel(Base):
     __tablename__ = "workout_routines"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
     name = Column(String(255), nullable=False)
     is_ai_generated = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-    user = relationship("UserModel")
+    user = relationship("UserModel", back_populates="workout_routines")
+    routine_exercises = relationship("RoutineExerciseModel", back_populates="routine", cascade="all, delete-orphan")
+    sessions = relationship("WorkoutSessionModel", back_populates="routine", cascade="all, delete-orphan")
+
+class RoutineExerciseModel(Base):
+    __tablename__ = "routine_exercises"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    routine_id = Column(UUID(as_uuid=True), ForeignKey("workout_routines.id", ondelete="CASCADE"), nullable=False)
+    exercise_id = Column(UUID(as_uuid=True), ForeignKey("exercises.id"), nullable=False)
+    order_index = Column(Integer, default=0)
+    target_sets = Column(Integer, default=3)
+    target_reps = Column(Integer, default=10)
+    target_weight_kg = Column(Numeric(precision=10, scale=2), default=0.0)
+
+    routine = relationship("WorkoutRoutineModel", back_populates="routine_exercises")
+    exercise = relationship("ExerciseModel")
 
 class WorkoutSessionModel(Base):
     __tablename__ = "workout_sessions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    routine_id = Column(UUID(as_uuid=True), ForeignKey("workout_routines.id"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    routine_id = Column(UUID(as_uuid=True), ForeignKey("workout_routines.id", ondelete="SET NULL"))
     started_at = Column(DateTime, default=datetime.utcnow)
     ended_at = Column(DateTime)
 
     user = relationship("UserModel", back_populates="workout_sessions")
-    routine = relationship("WorkoutRoutineModel")
-    sets = relationship("SetLogModel", back_populates="session")
+    routine = relationship("WorkoutRoutineModel", back_populates="sessions")
+    sets = relationship("SetLogModel", back_populates="session", cascade="all, delete-orphan")
 
 class SetLogModel(Base):
     __tablename__ = "set_logs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id = Column(UUID(as_uuid=True), ForeignKey("workout_sessions.id"), nullable=False)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("workout_sessions.id", ondelete="CASCADE"), nullable=False)
     exercise_id = Column(UUID(as_uuid=True), ForeignKey("exercises.id"), nullable=False)
     reps = Column(Integer, nullable=False)
     weight_kg = Column(Numeric(precision=10, scale=2), nullable=False)
@@ -70,11 +129,11 @@ class SetLogModel(Base):
     session = relationship("WorkoutSessionModel", back_populates="sets")
     exercise = relationship("ExerciseModel")
 
-class MealPlanModel(Base) :
+class MealPlanModel(Base):
     __tablename__ = "meal_plans"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     target_calories = Column(Integer)
     target_protein = Column(Integer)
     target_carbs = Column(Integer)
@@ -87,7 +146,7 @@ class MealLogModel(Base):
     __tablename__ = "meals_logged"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     food_name = Column(String(255), nullable=False)
     calories = Column(Integer)
     protein = Column(Integer)
@@ -101,7 +160,7 @@ class RecoveryLogModel(Base):
     __tablename__ = "recovery_logs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     date = Column(Date, nullable=False)
     sleep_hours = Column(Float)
     fatigue_score = Column(Integer)

@@ -9,11 +9,12 @@ import {
   KeyboardAvoidingView, 
   Platform,
   Alert,
-  Dimensions
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
-// Assuming regular Views for now to avoid dependency issues
+import { supabase } from '../lib/supabase';
 
 const { width } = Dimensions.get('window');
 
@@ -22,12 +23,39 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 const LoginScreen = ({ navigation }: Props) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    if (email.toLowerCase() === 'juanjo08' && password === 'App_volt') {
+  const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert('Error', 'Por favor ingresa tu correo y contraseña.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      if (error) {
+        let message = 'Error al iniciar sesión.';
+        if (error.message.includes('Invalid login credentials')) {
+          message = 'Correo o contraseña incorrectos.';
+        } else if (error.message.includes('Email not confirmed')) {
+          message = 'Debes confirmar tu correo electrónico antes de iniciar sesión.';
+        } else {
+          message = error.message;
+        }
+        Alert.alert('Error', message);
+        return;
+      }
+
       navigation.replace('Main');
-    } else {
-      Alert.alert('Error', 'Credenciales incorrectas. Usa: Juanjo08 / App_volt');
+    } catch (err) {
+      Alert.alert('Error', 'Ocurrió un error inesperado. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,17 +111,22 @@ const LoginScreen = ({ navigation }: Props) => {
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={styles.loginButton}
+              style={[styles.loginButton, loading && { opacity: 0.7 }]}
               onPress={handleLogin}
+              disabled={loading}
             >
-              <Text style={styles.loginButtonText}>INICIAR SESIÓN</Text>
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.loginButtonText}>INICIAR SESIÓN</Text>
+              )}
             </TouchableOpacity>
           </View>
 
           {/* Social / Register Footnote */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>¿No tienes una cuenta? </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
               <Text style={styles.signUpText}>Únete al club</Text>
             </TouchableOpacity>
           </View>

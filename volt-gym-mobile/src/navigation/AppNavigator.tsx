@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import SplashScreen from '../screens/SplashScreen';
 import LoginScreen from '../screens/LoginScreen';
+import RegisterScreen from '../screens/RegisterScreen';
 import BottomTabNavigator from './BottomTabNavigator';
 import NutritionScreen from '../screens/NutritionScreen';
 import ExerciseListScreen from '../screens/ExerciseListScreen';
@@ -11,6 +12,7 @@ import ActiveWorkoutScreen from '../screens/ActiveWorkoutScreen';
 export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
+  Register: undefined;
   Main: undefined;
   Nutrition: undefined;
   ExerciseList: { sessionId?: string } | undefined;
@@ -30,6 +32,7 @@ const AppNavigator = () => {
     >
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="Main" component={BottomTabNavigator} />
 
       {/* Nutrition is accessed from Home, not a tab */}

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { workoutApi, Exercise, CompleteSessionResponse } from '../features/workouts/api/workoutApi';
+import ScaleTouchable from '../shared/ui/ScaleTouchable';
 
 interface SetEntry {
   reps: string;
@@ -97,7 +98,11 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
     }
 
     try {
-      const res = await workoutApi.logSet(sessionId, block.exercise.id, reps, weight);
+      const res = await workoutApi.logSet(sessionId, block.exercise.id, {
+        reps,
+        weight_kg: weight,
+        rest_seconds: 60
+      });
       setExerciseBlocks((prev) => {
         const updated = [...prev];
         const sets = [...updated[blockIdx].sets];
@@ -236,12 +241,12 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
 
       {/* Bottom Bar */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.addExerciseBtn} onPress={handleAddExercise}>
+        <ScaleTouchable style={styles.addExerciseBtn} onPress={handleAddExercise}>
           <MaterialIcons name="add-circle-outline" size={20} color="#FF4500" />
           <Text style={styles.addExerciseBtnText}>Ejercicio</Text>
-        </TouchableOpacity>
+        </ScaleTouchable>
 
-        <TouchableOpacity
+        <ScaleTouchable
           style={[styles.completeBtn, completing && { opacity: 0.5 }]}
           onPress={handleComplete}
           disabled={completing}
@@ -254,7 +259,7 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
               <MaterialIcons name="check-circle" size={20} color="#000" />
             </>
           )}
-        </TouchableOpacity>
+        </ScaleTouchable>
       </View>
     </SafeAreaView>
   );
