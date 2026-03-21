@@ -1,5 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Exercise } from '../features/workouts/api/workoutApi';
 
 import SplashScreen from '../screens/SplashScreen';
 import LoginScreen from '../screens/LoginScreen';
@@ -9,6 +10,10 @@ import NutritionScreen from '../screens/NutritionScreen';
 import ExerciseListScreen from '../screens/ExerciseListScreen';
 import ActiveWorkoutScreen from '../screens/ActiveWorkoutScreen';
 import ClassesScreen from '../screens/ClassesScreen';
+import ExercisePickerScreen from '../screens/ExercisePickerScreen';
+import CreateRoutineScreen from '../screens/CreateRoutineScreen';
+import RoutineDetailScreen from '../screens/RoutineDetailScreen';
+import { colors } from '../theme/theme';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -17,7 +22,15 @@ export type RootStackParamList = {
   Main: undefined;
   Nutrition: undefined;
   ExerciseList: { sessionId?: string } | undefined;
-  ActiveWorkout: { sessionId?: string; addExercise?: any } | undefined;
+  ExercisePicker: {
+    mode: 'create' | 'add-to-routine';
+    routineId?: string;
+    existingExerciseIds?: string[];
+    routineName?: string;
+  };
+  CreateRoutine: { selectedExercises?: Exercise[] } | undefined;
+  RoutineDetail: { routineId: string };
+  ActiveWorkout: { routineId?: string; sessionId?: string; addExercise?: any } | undefined;
   Classes: undefined;
 };
 
@@ -29,7 +42,7 @@ const AppNavigator = () => {
       initialRouteName="Splash"
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#000000' },
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       <Stack.Screen name="Splash" component={SplashScreen} />
@@ -44,14 +57,17 @@ const AppNavigator = () => {
         options={{
           presentation: 'modal',
           headerShown: true,
-          headerStyle: { backgroundColor: '#0F0F23' },
-          headerTintColor: '#FFFFFF',
+          headerStyle: { backgroundColor: colors.chrome },
+          headerTintColor: colors.textPrimary,
           headerTitle: 'Plan de nutrición',
         }}
       />
 
       {/* Workout Flow Screens */}
       <Stack.Screen name="ExerciseList" component={ExerciseListScreen} />
+      <Stack.Screen name="ExercisePicker" component={ExercisePickerScreen} />
+      <Stack.Screen name="CreateRoutine" component={CreateRoutineScreen} />
+      <Stack.Screen name="RoutineDetail" component={RoutineDetailScreen} />
       <Stack.Screen
         name="ActiveWorkout"
         component={ActiveWorkoutScreen}

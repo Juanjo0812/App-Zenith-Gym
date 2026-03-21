@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,7 +11,9 @@ import {
   View,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import apiClient from '../shared/api/apiClient';
+import { colors } from '../theme/theme';
 
 type ChatMsg = {
   id: string;
@@ -88,10 +89,10 @@ const AICoachScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
-          <MaterialIcons name="auto-awesome" size={24} color="#FF4500" />
+          <MaterialIcons name="auto-awesome" size={24} color={colors.accent} />
           <Text style={styles.headerTitle}>Entrenador VOLT</Text>
         </View>
         <Text style={styles.headerSubtitle}>Entrenador personal con IA</Text>
@@ -147,7 +148,7 @@ const AICoachScreen = () => {
                 <MaterialIcons name="smart-toy" size={16} color="#FFFFFF" />
               </View>
               <View style={[styles.messageBubble, styles.messageBubbleAI, styles.typingBubble]}>
-                <ActivityIndicator size="small" color="#FF4500" />
+                <ActivityIndicator size="small" color={colors.accent} />
                 <Text style={styles.typingText}>Escribiendo...</Text>
               </View>
             </View>
@@ -185,13 +186,13 @@ const AICoachScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.background,
   },
   header: {
     padding: 16,
-    backgroundColor: '#0F0F23',
+    backgroundColor: colors.chrome,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A2E',
+    borderBottomColor: colors.border,
     alignItems: 'center',
   },
   headerTitleRow: {
@@ -202,11 +203,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   chatContainer: {
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
@@ -244,18 +245,18 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   messageBubbleUser: {
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     borderBottomRightRadius: 4,
   },
   messageBubbleAI: {
-    backgroundColor: '#1A1A2E',
+    backgroundColor: colors.surfaceAlt,
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: '#2A2A4A',
+    borderColor: colors.border,
   },
   messageText: {
     fontSize: 15,
-    color: '#EAEAEA',
+    color: colors.textPrimary,
     lineHeight: 22,
   },
   messageTextUser: {
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
   },
   messageTime: {
     fontSize: 10,
-    color: '#888888',
+    color: colors.textMuted,
     marginTop: 4,
     alignSelf: 'flex-end',
   },
@@ -278,7 +279,7 @@ const styles = StyleSheet.create({
   },
   typingText: {
     fontSize: 13,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     fontStyle: 'italic',
   },
   inputContainer: {
@@ -286,34 +287,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#0F0F23',
+    backgroundColor: colors.chrome,
     borderTopWidth: 1,
-    borderTopColor: '#1A1A2E',
+    borderTopColor: colors.border,
   },
   input: {
     flex: 1,
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 10,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     maxHeight: 100,
   },
   sendButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#222222',
+    backgroundColor: colors.surfaceAlt,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
   },
   sendButtonActive: {
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
   },
 });
 

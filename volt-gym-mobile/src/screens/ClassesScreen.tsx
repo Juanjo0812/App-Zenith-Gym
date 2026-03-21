@@ -3,7 +3,6 @@ import {
   StyleSheet,
   View,
   Text,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
@@ -14,6 +13,8 @@ import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { classesApi, ScheduledClass, ClassType } from '../features/classes/api/classesApi';
 import { userService, UserProfile } from '../services/userService';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, getInsetBottomPadding } from '../theme/theme';
 
 type Props = NativeStackScreenProps<any, 'Classes'>;
 
@@ -78,6 +79,7 @@ function formatDate(d: Date): string {
 }
 
 const ClassesScreen = ({ navigation }: Props) => {
+  const insets = useSafeAreaInsets();
   const [schedule, setSchedule] = useState<ScheduledClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -175,18 +177,18 @@ const ClassesScreen = ({ navigation }: Props) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#FF4500" style={{ flex: 1 }} />
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <ActivityIndicator size="large" color={colors.accent} style={{ flex: 1 }} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF4500" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
       >
         {/* Header */}
@@ -399,7 +401,7 @@ const ClassesScreen = ({ navigation }: Props) => {
       {/* FAB for creation */}
       {isCoachOrAdmin && (
         <TouchableOpacity 
-          style={styles.fab} 
+          style={[styles.fab, { bottom: getInsetBottomPadding(30, insets.bottom) }]} 
           onPress={handleCreateClass}
           activeOpacity={0.8}
         >
@@ -413,7 +415,7 @@ const ClassesScreen = ({ navigation }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: 20,
@@ -429,14 +431,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
 
   // Week Selector
@@ -457,11 +459,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 16,
     marginHorizontal: 3,
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     minWidth: 44,
   },
   dayPillSelected: {
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
   },
   dayPillToday: {
     borderWidth: 1,
@@ -469,12 +471,12 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontSize: 11,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     fontWeight: '600',
     marginBottom: 4,
   },
   dayLabelSelected: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   dayNumber: {
     fontSize: 16,
@@ -488,7 +490,7 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     marginTop: 4,
   },
   dotSelected: {
@@ -497,13 +499,13 @@ const styles = StyleSheet.create({
 
   // Month Calendar
   calendarContainer: {
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 16,
     paddingTop: 20,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
   },
   monthHeader: {
     flexDirection: 'row',
@@ -518,7 +520,7 @@ const styles = StyleSheet.create({
   monthTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   daysHeaderRow: {
     flexDirection: 'row',
@@ -529,7 +531,7 @@ const styles = StyleSheet.create({
     width: 38,
     textAlign: 'center',
     fontSize: 13,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     fontWeight: 'bold',
   },
   calendarDivider: {
@@ -552,7 +554,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   calendarCellSelected: {
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     borderRadius: 22,
   },
   calendarCellToday: {
@@ -577,7 +579,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     position: 'absolute',
     bottom: 4,
   },
@@ -600,7 +602,7 @@ const styles = StyleSheet.create({
   enrollmentChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 14,
@@ -632,7 +634,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
   },
   classCardCancelled: {
     opacity: 0.5,
@@ -653,11 +655,11 @@ const styles = StyleSheet.create({
   className: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   classInstructor: {
     fontSize: 13,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     marginTop: 4,
   },
   cancelledBadge: {
@@ -687,7 +689,7 @@ const styles = StyleSheet.create({
 
   // Enroll Button
   enrollButton: {
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',
@@ -695,7 +697,7 @@ const styles = StyleSheet.create({
   enrolledButton: {
     backgroundColor: '#333333',
     borderWidth: 1,
-    borderColor: '#FF4500',
+    borderColor: colors.accent,
   },
   fullButton: {
     backgroundColor: '#222222',
@@ -719,22 +721,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   emptyButton: {
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: colors.border,
   },
   emptyButtonText: {
-    color: '#FF4500',
+    color: colors.accent,
     fontWeight: 'bold',
   },
   fab: {
     position: 'absolute',
     bottom: 30,
     right: 30,
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     width: 60,
     height: 60,
     borderRadius: 30,
@@ -750,11 +752,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#1A0D08',
+    backgroundColor: colors.accentSoft,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 69, 0, 0.2)',
+    borderColor: colors.accentBorder,
   },
 });
 

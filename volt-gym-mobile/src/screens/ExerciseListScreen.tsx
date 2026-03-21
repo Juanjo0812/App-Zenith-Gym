@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
-  StyleSheet, View, Text, SafeAreaView, FlatList,
+  StyleSheet, View, Text, FlatList,
   TouchableOpacity, TextInput, ActivityIndicator, Alert, Modal, Image, ScrollView,
-  KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { workoutApi, Exercise } from '../features/workouts/api/workoutApi';
-import { useRoutines } from '../context/RoutineContext';
-import ScaleTouchable from '../shared/ui/ScaleTouchable';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors } from '../theme/theme';
 
 // Static image mapping for React Native
 const EXERCISE_IMAGES: Record<string, any> = {
@@ -40,16 +39,7 @@ const ExerciseListScreen = ({ navigation, route }: Props) => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeMuscle, setActiveMuscle] = useState('Todos');
-  
-  // Modal state
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [showConfigForm, setShowConfigForm] = useState(false);
-  const [routineName, setRoutineName] = useState('');
-  const [setsCount, setSetsCount] = useState('3');
-  const [repsCount, setRepsCount] = useState('10');
-  const [weightVal, setWeightVal] = useState('0');
-
-  const { addExerciseToRoutine } = useRoutines();
 
   const sessionId: string | undefined = route.params?.sessionId;
 
@@ -98,48 +88,16 @@ const ExerciseListScreen = ({ navigation, route }: Props) => {
 
   const closeModal = () => {
     setSelectedExercise(null);
-    setShowConfigForm(false);
-    setRoutineName('');
-    setSetsCount('3');
-    setRepsCount('10');
-    setWeightVal('0');
   };
 
-  const addExerciseToWorkout = () => {
-    // If sessionId exists, this was opened from ActiveWorkout
+  // If opened from ActiveWorkout, allow adding exercise to session
+  const handleAddToSession = () => {
     if (selectedExercise && sessionId) {
-      navigation.navigate('ActiveWorkout', { 
-        sessionId, 
-        addExercise: selectedExercise 
+      navigation.navigate('ActiveWorkout', {
+        sessionId,
+        addExercise: selectedExercise,
       });
       closeModal();
-    } else {
-      // Toggle form
-      setShowConfigForm(true);
-    }
-  };
-
-  const confirmAddToRoutine = async () => {
-    if (!routineName.trim() || !selectedExercise) {
-      Alert.alert('Error', 'Por favor, ingresa el nombre de la rutina.');
-      return;
-    }
-
-    try {
-      await addExerciseToRoutine(
-        null, // No routine ID for new exercise to a potentially new routine, logic in context handles it by name
-        routineName,
-        selectedExercise.id,
-        selectedExercise.name,
-        selectedExercise.primary_muscle,
-        Number(weightVal) || 0,
-        Number(repsCount) || 10,
-        Number(setsCount) || 3
-      );
-      Alert.alert('Éxito', `${selectedExercise.name} se añadió a la rutina "${routineName}".`);
-      closeModal();
-    } catch (e) {
-      Alert.alert('Error', 'Hubo un problema al añadir el ejercicio');
     }
   };
 
@@ -163,16 +121,12 @@ const ExerciseListScreen = ({ navigation, route }: Props) => {
           )}
         </View>
       </View>
-      <MaterialIcons
-        name="chevron-right"
-        size={24}
-        color="#555"
-      />
+      <MaterialIcons name="chevron-right" size={24} color="#555" />
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -192,9 +146,14 @@ const ExerciseListScreen = ({ navigation, route }: Props) => {
           value={search}
           onChangeText={setSearch}
         />
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <MaterialIcons name="close" size={18} color="#666" />
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* Filter Chips - Fixed dimensions */}
+      {/* Filter Chips */}
       <View style={styles.filterWrapper}>
         <FlatList
           horizontal
@@ -221,7 +180,7 @@ const ExerciseListScreen = ({ navigation, route }: Props) => {
 
       {/* Exercise List */}
       {loading ? (
-        <ActivityIndicator size="large" color="#FF4500" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color={colors.accent} style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={filteredExercises}
@@ -244,300 +203,135 @@ const ExerciseListScreen = ({ navigation, route }: Props) => {
       >
         <View style={styles.modalOverlay}>
           <TouchableOpacity style={styles.modalBgTap} onPress={closeModal} activeOpacity={1} />
-          
+
           {selectedExercise && (
             <View style={styles.modalContent}>
               <View style={styles.modalHandle} />
-              
+
               <Text style={styles.modalTitle}>{selectedExercise.name}</Text>
-              
+
               <View style={styles.modalTags}>
                 <Text style={styles.modalTagText}>
-                  Músculo: <Text style={{color: '#FFF'}}>{selectedExercise.primary_muscle}</Text>
+                  Músculo: <Text style={{ color: '#FFF' }}>{selectedExercise.primary_muscle}</Text>
                 </Text>
                 <Text style={styles.modalTagText}>
-                  Equipo: <Text style={{color: '#FFF'}}>{selectedExercise.equipment}</Text>
+                  Equipo: <Text style={{ color: '#FFF' }}>{selectedExercise.equipment}</Text>
                 </Text>
               </View>
 
-              <KeyboardAvoidingView 
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
-              >
-                <ScrollView 
-                  style={styles.modalScroll} 
-                  contentContainerStyle={{ paddingBottom: 250 }}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {EXERCISE_IMAGES[selectedExercise.name] ? (
-                    <Image 
-                      source={EXERCISE_IMAGES[selectedExercise.name]} 
-                      style={styles.modalImage} 
-                      resizeMode="contain"
-                    />
-                  ) : (
-                    <View style={styles.imagePlaceholder}>
-                      <MaterialIcons name="image-not-supported" size={48} color="#333" />
-                    </View>
-                  )}
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+                {EXERCISE_IMAGES[selectedExercise.name] ? (
+                  <Image
+                    source={EXERCISE_IMAGES[selectedExercise.name]}
+                    style={styles.modalImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <View style={styles.imagePlaceholder}>
+                    <MaterialIcons name="image-not-supported" size={48} color="#333" />
+                  </View>
+                )}
 
-                  <Text style={styles.modalSectionTitle}>Instrucciones</Text>
-                  <Text style={styles.modalDescription}>
-                    {selectedExercise.instructions || 'Sin instrucciones disponibles para este ejercicio.'}
-                  </Text>
+                <Text style={styles.modalSectionTitle}>Instrucciones</Text>
+                <Text style={styles.modalDescription}>
+                  {selectedExercise.instructions || 'Sin instrucciones disponibles para este ejercicio.'}
+                </Text>
+              </ScrollView>
 
-                  {showConfigForm && (
-                    <View style={styles.configForm}>
-                      <Text style={styles.modalSectionTitle}>Configurar ejercicio</Text>
-                      
-                      <Text style={styles.inputLabel}>Nombre o enfoque de la rutina</Text>
-                      <TextInput
-                        style={styles.inputField}
-                        placeholder="Ej. Empuje hipertrofia"
-                        placeholderTextColor="#666"
-                        value={routineName}
-                        onChangeText={setRoutineName}
-                        autoCapitalize="sentences"
-                      />
-
-                      <View style={styles.rowInputs}>
-                        <View style={styles.inputWrap}>
-                          <Text style={styles.inputLabel}>Series</Text>
-                          <TextInput
-                            style={styles.inputField}
-                            keyboardType="numeric"
-                            value={setsCount}
-                            onChangeText={setSetsCount}
-                            returnKeyType="done"
-                          />
-                        </View>
-                        <View style={styles.inputWrap}>
-                          <Text style={styles.inputLabel}>Reps</Text>
-                          <TextInput
-                            style={styles.inputField}
-                            keyboardType="numeric"
-                            value={repsCount}
-                            onChangeText={setRepsCount}
-                            returnKeyType="done"
-                          />
-                        </View>
-                        <View style={styles.inputWrap}>
-                          <Text style={styles.inputLabel}>kg</Text>
-                          <TextInput
-                            style={styles.inputField}
-                            keyboardType="numeric"
-                            value={weightVal}
-                            onChangeText={setWeightVal}
-                            returnKeyType="done"
-                          />
-                        </View>
-                      </View>
-
-                      <ScaleTouchable style={styles.confirmButton} onPress={confirmAddToRoutine}>
-                        <Text style={styles.confirmButtonText}>Añadir a rutina</Text>
-                      </ScaleTouchable>
-                    </View>
-                  )}
-                </ScrollView>
-              </KeyboardAvoidingView>
-
-              {!showConfigForm && (
-                <ScaleTouchable style={styles.addButton} onPress={addExerciseToWorkout}>
-                  <MaterialIcons name="add" size={28} color="#000" />
-                </ScaleTouchable>
+              {/* Add to session button (only if opened from ActiveWorkout) */}
+              {sessionId && (
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.addToSessionBtn} onPress={handleAddToSession}>
+                    <MaterialIcons name="add" size={20} color={colors.onAccent} />
+                    <Text style={styles.addToSessionBtnText}>Añadir al entreno</Text>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
           )}
         </View>
       </Modal>
-
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 16, backgroundColor: '#0F0F23', borderBottomWidth: 1, borderBottomColor: '#1A1A2E',
+    padding: 16, backgroundColor: colors.chrome, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FF4500' },
+  headerTitle: { fontSize: 20, fontWeight: 'bold', color: colors.accent },
   searchContainer: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#1A1A1A',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceAlt,
     margin: 16, marginBottom: 8, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
   },
-  searchInput: { flex: 1, color: '#FFF', marginLeft: 8, fontSize: 15 },
-  
-  // Fixed size chip filters
+  searchInput: { flex: 1, color: colors.textPrimary, marginLeft: 8, fontSize: 15 },
+
+  // Filter chips
   filterWrapper: { height: 50, marginBottom: 8 },
   filterRow: { paddingHorizontal: 16, gap: 10, alignItems: 'center' },
   chip: {
-    width: 100, 
-    height: 36, 
-    borderRadius: 18,
-    backgroundColor: '#1A1A1A', 
-    borderWidth: 1.5, 
-    borderColor: '#333',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 16, height: 36, borderRadius: 18,
+    backgroundColor: colors.surfaceAlt, borderWidth: 1.5, borderColor: colors.border,
+    justifyContent: 'center', alignItems: 'center',
   },
-  chipActive: { backgroundColor: '#FF4500', borderColor: '#FF4500' },
-  chipText: { color: '#AAA', fontSize: 13, fontWeight: '600' },
-  chipTextActive: { color: '#FFF' },
-  
+  chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
+  chipText: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
+  chipTextActive: { color: colors.textPrimary },
+
   // List
   listContent: { padding: 16, gap: 10, paddingBottom: 40 },
   exerciseCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#111',
-    borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#222',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface,
+    borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colors.border,
   },
   exerciseInfo: { flex: 1 },
-  exerciseName: { fontSize: 16, fontWeight: '700', color: '#FFF', marginBottom: 8 },
+  exerciseName: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
   tagsRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
   tag: {
-    backgroundColor: 'rgba(255,69,0,0.15)', paddingHorizontal: 10, paddingVertical: 4,
+    backgroundColor: colors.accentSoft, paddingHorizontal: 10, paddingVertical: 4,
     borderRadius: 8,
   },
   equipTag: { backgroundColor: 'rgba(0,230,118,0.12)' },
   diffTag: { backgroundColor: 'rgba(100,100,255,0.12)' },
-  tagText: { color: '#CCC', fontSize: 11, fontWeight: '500' },
-  emptyText: { color: '#666', textAlign: 'center', marginTop: 40, fontSize: 15 },
+  tagText: { color: colors.textSecondary, fontSize: 11, fontWeight: '500' },
+  emptyText: { color: colors.textMuted, textAlign: 'center', marginTop: 40, fontSize: 15 },
 
-  // Modal styling
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'flex-end',
-  },
-  modalBgTap: {
-    flex: 1,
-  },
+  // Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  modalBgTap: { flex: 1 },
   modalContent: {
-    backgroundColor: '#111',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 0,
-    minHeight: '85%',
-    maxHeight: '88%',
-    borderColor: '#222',
-    borderWidth: 1,
-  },
-  modalScroll: {
-    flex: 1,
+    backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24, paddingBottom: 0, minHeight: '70%', maxHeight: '85%',
+    borderColor: colors.border, borderWidth: 1,
   },
   modalHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#333',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 20,
+    width: 40, height: 4, backgroundColor: '#333', borderRadius: 2,
+    alignSelf: 'center', marginBottom: 20,
   },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 8,
-  },
+  modalTitle: { fontSize: 24, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 8 },
   modalTags: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222',
+    flexDirection: 'row', gap: 16, marginBottom: 20, paddingBottom: 20,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  modalTagText: {
-    fontSize: 14,
-    color: '#888',
-    fontWeight: '500',
-  },
-  modalImage: {
-    width: '100%',
-    height: 200,
-    marginBottom: 20,
-    borderRadius: 12,
-  },
+  modalTagText: { fontSize: 14, color: colors.textMuted, fontWeight: '500' },
+  modalScroll: { flex: 1 },
+  modalImage: { width: '100%', height: 200, marginBottom: 20, borderRadius: 12 },
   imagePlaceholder: {
-    width: '100%',
-    height: 150,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
+    width: '100%', height: 150, backgroundColor: colors.surfaceAlt, borderRadius: 12,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 20,
   },
-  modalSectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FF4500',
-    marginBottom: 10,
+  modalSectionTitle: { fontSize: 16, fontWeight: 'bold', color: colors.accent, marginBottom: 10 },
+  modalDescription: { fontSize: 14, color: colors.textSecondary, lineHeight: 22, marginBottom: 20 },
+  modalActions: {
+    paddingVertical: 16, borderTopWidth: 1, borderTopColor: colors.border,
   },
-  modalDescription: {
-    fontSize: 14,
-    color: '#CCC',
-    lineHeight: 22,
-    marginBottom: 20,
+  addToSessionBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 14,
   },
-  addButton: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FF4500',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#FF4500',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-  },
-  configForm: {
-    marginTop: 10,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#222',
-  },
-  inputLabel: {
-    color: '#888',
-    fontSize: 12,
-    marginBottom: 6,
-    fontWeight: 'bold',
-  },
-  inputField: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 8,
-    padding: 12,
-    color: '#FFF',
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: '#333',
-    marginBottom: 16,
-  },
-  rowInputs: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  inputWrap: {
-    flex: 1,
-  },
-  confirmButton: {
-    backgroundColor: '#FF4500',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  confirmButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  }
+  addToSessionBtnText: { color: colors.onAccent, fontWeight: '800', fontSize: 16 },
 });
 
 export default ExerciseListScreen;

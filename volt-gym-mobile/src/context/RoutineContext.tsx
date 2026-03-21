@@ -1,5 +1,15 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import { workoutApi, RoutineResponse, RoutineCreateRequest, RoutineExerciseRequest, RoutineExerciseResponse } from '../features/workouts/api/workoutApi';
+
+// Type for batch exercise creation
+export type NewRoutineExercise = {
+  exerciseId: string;
+  name: string;
+  muscle: string;
+  sets: number;
+  reps: number;
+  weight: number;
+};
 
 export type ExerciseSet = {
   reps: number;
@@ -35,6 +45,9 @@ type RoutineContextType = {
     reps: number,
     setsCount: number
   ) => Promise<void>;
+  createRoutineWithExercises: (name: string, exercises: NewRoutineExercise[]) => Promise<void>;
+  addExercisesToRoutine: (routineId: string, exercises: NewRoutineExercise[]) => Promise<void>;
+  getRoutineById: (id: string) => Routine | undefined;
   updateRoutineName: (
     id: string,
     newName: string
@@ -243,6 +256,61 @@ export const RoutineProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // --- New batch methods ---
+
+  const createRoutineWithExercises = async (name: string, exercises: NewRoutineExercise[]) => {
+    try {
+      const exercisesReq: RoutineExerciseRequest[] = exercises.map((e, idx) => ({
+        exercise_id: e.exerciseId,
+        order_index: idx,
+        target_sets: e.sets,
+        target_reps: e.reps,
+        target_weight_kg: e.weight,
+      }));
+      await workoutApi.createRoutine({ name: name.trim(), exercises: exercisesReq });
+      await refreshRoutines();
+    } catch (e) {
+      console.error('Failed to create routine with exercises', e);
+      throw e;
+    }
+  };
+
+  const addExercisesToRoutine = async (routineId: string, exercises: NewRoutineExercise[]) => {
+    try {
+      const existing = routines.find(r => r.id === routineId);
+      if (!existing) return;
+
+      const currentExercises: RoutineExerciseRequest[] = existing.exercises.map(e => ({
+        exercise_id: e.exerciseId,
+        order_index: e.orderIndex,
+        target_sets: e.sets.length,
+        target_reps: e.sets[0]?.reps || 10,
+        target_weight_kg: e.sets[0]?.weight || 0,
+      }));
+
+      const newExercises: RoutineExerciseRequest[] = exercises.map((e, idx) => ({
+        exercise_id: e.exerciseId,
+        order_index: currentExercises.length + idx,
+        target_sets: e.sets,
+        target_reps: e.reps,
+        target_weight_kg: e.weight,
+      }));
+
+      await workoutApi.updateRoutine(routineId, {
+        name: existing.name,
+        exercises: [...currentExercises, ...newExercises],
+      });
+      await refreshRoutines();
+    } catch (e) {
+      console.error('Failed to add exercises to routine', e);
+      throw e;
+    }
+  };
+
+  const getRoutineById = useCallback((id: string): Routine | undefined => {
+    return routines.find(r => r.id === id);
+  }, [routines]);
+
   return (
     <RoutineContext.Provider
       value={{
@@ -250,6 +318,9 @@ export const RoutineProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         refreshRoutines,
         addExerciseToRoutine,
+        createRoutineWithExercises,
+        addExercisesToRoutine,
+        getRoutineById,
         updateRoutineName,
         updateExerciseInRoutine,
         deleteExerciseFromRoutine,

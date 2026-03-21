@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -7,6 +8,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { userService, UserProfile, UserDashboard, getXpForNextLevel, getXpProgress } from '../services/userService';
 import { classesApi, ScheduledClass } from '../features/classes/api/classesApi';
+import { colors } from '../theme/theme';
 
 type Props = BottomTabScreenProps<any, 'Home'>;
 
@@ -55,8 +57,8 @@ const HomeScreen = ({ navigation }: Props) => {
 
   if (loading || !profile) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#FF4500" style={{ flex: 1 }} />
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <ActivityIndicator size="large" color={colors.accent} style={{ flex: 1 }} />
       </SafeAreaView>
     );
   }
@@ -65,7 +67,7 @@ const HomeScreen = ({ navigation }: Props) => {
   const xpProgressPercent = getXpProgress(profile.total_xp, profile.level);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
         {/* Header Section */}
@@ -111,7 +113,7 @@ const HomeScreen = ({ navigation }: Props) => {
         >
           <View style={styles.cardHeaderRow}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <MaterialIcons name="event" size={24} color="#7C4DFF" />
+              <MaterialIcons name="event" size={24} color={colors.textSecondary} />
               <Text style={styles.cardTitle}>Clases grupales</Text>
             </View>
             <MaterialIcons name="chevron-right" size={24} color="#A0A0B8" />
@@ -199,7 +201,7 @@ const HomeScreen = ({ navigation }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: 20,
@@ -213,38 +215,38 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 16,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
   },
   userName: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   levelBadge: {
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
   },
   levelText: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontWeight: 'bold',
     fontSize: 14,
   },
   card: {
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
   },
   highlightCard: {
-    borderColor: 'rgba(255, 69, 0, 0.3)',
-    backgroundColor: '#1A0F0A',
+    borderColor: colors.accentBorder,
+    backgroundColor: colors.surfaceAlt,
   },
   classesCard: {
-    borderColor: 'rgba(124, 77, 255, 0.3)',
-    backgroundColor: '#0F0A1A',
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceAlt,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -255,34 +257,34 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   highlightTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FF4500',
+    color: colors.accent,
     marginLeft: 8,
     flex: 1,
   },
   xpText: {
     fontSize: 14,
-    color: '#FF4500',
+    color: colors.accent,
     fontWeight: 'bold',
   },
   progressBarBackground: {
     height: 8,
-    backgroundColor: '#333333',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     borderRadius: 4,
   },
   recommendationText: {
     fontSize: 15,
-    color: '#D0D0D0',
+    color: colors.textSecondary,
     lineHeight: 22,
   },
   grid: {
@@ -296,17 +298,17 @@ const styles = StyleSheet.create({
   gridValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     marginTop: 12,
     marginBottom: 4,
   },
   gridLabel: {
     fontSize: 13,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
   },
   macroText: {
     fontSize: 14,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     marginTop: 8,
   },
 
@@ -320,7 +322,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A2E',
+    borderBottomColor: colors.border,
   },
   classPreviewDot: {
     width: 8,
@@ -330,22 +332,22 @@ const styles = StyleSheet.create({
   classPreviewName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   classPreviewTime: {
     fontSize: 12,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   classPreviewCapacity: {
-    backgroundColor: '#1A1A2E',
+    backgroundColor: colors.surfaceAlt,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
   },
   classPreviewCount: {
     fontSize: 11,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   enrolledBadge: {
@@ -353,7 +355,7 @@ const styles = StyleSheet.create({
   },
   classesEmptyText: {
     fontSize: 14,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
   },
 });
 

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MOCK_PROGRESS, MOCK_USER } from '../data/mockData';
+import { colors } from '../theme/theme';
 
 const ProgressScreen = () => {
   const [activeTab, setActiveTab] = useState<'gamification' | 'tracking'>('gamification');
   const xpProgress = (MOCK_USER.xp / MOCK_USER.xpNextLevel) * 100;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Header and Segmented Control */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Tu Evolución</Text>
@@ -161,26 +163,26 @@ const ProgressScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.background,
   },
   header: {
     padding: 20,
-    backgroundColor: '#0F0F23',
+    backgroundColor: colors.chrome,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A2E',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FF4500',
+    color: colors.accent,
     marginBottom: 16,
   },
   segmentedControl: {
     flexDirection: 'row',
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
   },
   segment: {
     flex: 1,
@@ -189,14 +191,14 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   segmentActive: {
-    backgroundColor: '#2A2A4A',
+    backgroundColor: colors.surfaceAlt,
   },
   segmentText: {
-    color: '#888888',
+    color: colors.textMuted,
     fontWeight: '600',
   },
   segmentTextActive: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   scrollContent: {
     padding: 20,
@@ -205,20 +207,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     marginBottom: 12,
   },
   card: {
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     marginBottom: 16,
   },
   levelRow: {
@@ -230,13 +232,13 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
   levelNumberBig: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 24,
     fontWeight: '900',
   },
@@ -246,31 +248,31 @@ const styles = StyleSheet.create({
   levelTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   xpText: {
     fontSize: 14,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   progressBarBackground: {
     height: 10,
-    backgroundColor: '#333333',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 5,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     borderRadius: 5,
   },
   challengeCard: {
-    backgroundColor: '#1A1A2E',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#2A2A4A',
+    borderColor: colors.border,
   },
   challengeHeaderRow: {
     flexDirection: 'row',
@@ -279,18 +281,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   challengeName: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 15,
     fontWeight: 'bold',
   },
   daysLeft: {
-    color: '#FF4500',
+    color: colors.accent,
     fontSize: 12,
     fontWeight: 'bold',
   },
   progressBarBackgroundSm: {
     height: 6,
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -300,7 +302,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   challengeProgressText: {
-    color: '#888888',
+    color: colors.textMuted,
     fontSize: 12,
     marginTop: 8,
   },
@@ -313,23 +315,23 @@ const styles = StyleSheet.create({
   badgeItem: {
     width: '30%',
     alignItems: 'center',
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
   },
   badgeIconBg: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#1A1A2E',
+    backgroundColor: colors.surfaceAlt,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
   },
   badgeName: {
-    color: '#EAEAEA',
+    color: colors.textPrimary,
     fontSize: 11,
     textAlign: 'center',
     fontWeight: '600',
@@ -348,17 +350,17 @@ const styles = StyleSheet.create({
     borderBottomColor: '#222222',
   },
   rankText: {
-    color: '#888888',
+    color: colors.textMuted,
     fontWeight: 'bold',
     width: 30,
   },
   userNameText: {
     flex: 1,
-    color: '#EAEAEA',
+    color: colors.textPrimary,
     fontSize: 15,
   },
   currentUserText: {
-    color: '#FF4500',
+    color: colors.accent,
     fontWeight: 'bold',
   },
   userXpText: {
@@ -386,27 +388,27 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   chartValue: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 12,
     fontWeight: 'bold',
   },
   chartLabel: {
-    color: '#888888',
+    color: colors.textMuted,
     fontSize: 11,
   },
   gainCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     padding: 16,
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
   },
   gainExercise: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 15,
     fontWeight: 'bold',
   },
@@ -430,22 +432,22 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: '#1A1A2E',
+    backgroundColor: colors.surfaceAlt,
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#2A2A4A',
+    borderColor: colors.border,
     alignItems: 'center',
   },
   statValue: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FF4500',
+    color: colors.accent,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 13,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
   }
 });
 

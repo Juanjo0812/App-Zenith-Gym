@@ -1,12 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import {
-  StyleSheet, View, Text, SafeAreaView, ScrollView, Image, TouchableOpacity,
+  StyleSheet, View, Text, ScrollView, Image, TouchableOpacity,
   ActivityIndicator, Alert, Modal, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { userService, UserProfile, UserStats, getXpForNextLevel, getXpProgress } from '../services/userService';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors } from '../theme/theme';
 
 const ProfileScreen = ({ navigation }: any) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -126,8 +128,8 @@ const ProfileScreen = ({ navigation }: any) => {
 
   if (loading || !profile) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#FF4500" style={{ flex: 1 }} />
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <ActivityIndicator size="large" color={colors.accent} style={{ flex: 1 }} />
       </SafeAreaView>
     );
   }
@@ -136,7 +138,7 @@ const ProfileScreen = ({ navigation }: any) => {
   const xpProgressPercent = getXpProgress(profile.total_xp, profile.level);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Perfil</Text>
         <TouchableOpacity onPress={handleSignOut}>
@@ -335,21 +337,21 @@ const ProfileScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#0F0F23',
+    backgroundColor: colors.chrome,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A2E',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FF4500',
+    color: colors.accent,
   },
   scrollContent: {
     padding: 20,
@@ -369,10 +371,10 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     borderWidth: 3,
-    borderColor: '#FF4500',
+    borderColor: colors.accent,
   },
   avatarPlaceholder: {
-    backgroundColor: '#1A1A2E',
+    backgroundColor: colors.surfaceAlt,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -391,35 +393,35 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     width: 30,
     height: 30,
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#000',
+    borderColor: colors.background,
   },
   usernameText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FF4500',
+    color: colors.accent,
     marginBottom: 4,
   },
   userName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   emailText: {
     fontSize: 14,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     marginBottom: 2,
   },
   memberSince: {
     fontSize: 14,
-    color: '#888888',
+    color: colors.textMuted,
     marginBottom: 12,
   },
   editButton: {
@@ -429,20 +431,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#FF4500',
+    borderColor: colors.accent,
     borderRadius: 20,
   },
   editButtonText: {
-    color: '#FF4500',
+    color: colors.accent,
     fontSize: 14,
     fontWeight: '600',
   },
   card: {
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
   },
   levelRow: {
     flexDirection: 'row',
@@ -453,13 +455,13 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
   levelNumberBig: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 20,
     fontWeight: '900',
   },
@@ -469,22 +471,22 @@ const styles = StyleSheet.create({
   levelTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   xpText: {
     fontSize: 13,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   progressBarBackground: {
     height: 8,
-    backgroundColor: '#333333',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     borderRadius: 4,
   },
   statsGrid: {
@@ -493,9 +495,9 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -503,20 +505,20 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     marginTop: 8,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 11,
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   menuList: {
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   menuItem: {
@@ -524,11 +526,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#222222',
+    borderBottomColor: colors.border,
   },
   menuItemText: {
     flex: 1,
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 15,
     marginLeft: 16,
   },
@@ -539,7 +541,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -554,7 +556,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
   },
   modalForm: {
     marginBottom: 16,
@@ -566,16 +568,16 @@ const styles = StyleSheet.create({
   modalLabel: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#FF4500',
+    color: colors.accent,
     letterSpacing: 2,
   },
   modalInput: {
-    backgroundColor: '#1A1A2E',
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 16,
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 16,
   },
   modalHint: {
@@ -584,18 +586,18 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   saveButton: {
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     padding: 18,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#FF4500',
+    shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   saveButtonText: {
-    color: '#FFFFFF',
+    color: colors.onAccent,
     fontSize: 16,
     fontWeight: '900',
     letterSpacing: 2,

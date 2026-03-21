@@ -1,18 +1,21 @@
 import React from 'react';
-import { StyleSheet, View, Text, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MOCK_NUTRITION } from '../data/mockData';
+import { colors, getInsetBottomPadding } from '../theme/theme';
 
 const NutritionScreen = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   const { target: calTarget, current: calCurrent } = MOCK_NUTRITION.macros.calories;
   const remaining = calTarget - calCurrent;
   const progressPercent = (calCurrent / calTarget) * 100;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Modal Header */}
       <View style={styles.header}>
         <TouchableOpacity 
@@ -98,8 +101,11 @@ const NutritionScreen = () => {
       </ScrollView>
 
       {/* Add Floating Button */}
-      <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
-        <MaterialIcons name="add" size={32} color="#000000" />
+      <TouchableOpacity
+        style={[styles.fab, { bottom: getInsetBottomPadding(24, insets.bottom) }]}
+        activeOpacity={0.8}
+      >
+        <MaterialIcons name="add" size={32} color={colors.onAccent} />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -108,7 +114,7 @@ const NutritionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -117,9 +123,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 16,
-    backgroundColor: '#0F0F23',
+    backgroundColor: colors.chrome,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A2E',
+    borderBottomColor: colors.border,
   },
   closeButton: {
     padding: 4,
@@ -127,22 +133,22 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FF4500',
+    color: colors.accent,
   },
   scrollContent: {
     padding: 20,
     paddingBottom: 100,
   },
   summaryCard: {
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
     marginBottom: 16,
   },
   summaryTitle: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 20,
@@ -157,17 +163,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   calorieLabel: {
-    color: '#888888',
+    color: colors.textMuted,
     fontSize: 14,
     marginBottom: 4,
   },
   calorieValue: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 36,
     fontWeight: 'bold',
   },
   calorieUnit: {
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     fontSize: 14,
     marginTop: -4,
   },
@@ -176,28 +182,28 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     borderWidth: 8,
-    borderColor: '#FF4500',
+    borderColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
   },
   circleValue: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 24,
     fontWeight: 'bold',
   },
   circleLabel: {
-    color: '#888888',
+    color: colors.textMuted,
     fontSize: 11,
   },
   progressBarBackground: {
     height: 8,
-    backgroundColor: '#333333',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     borderRadius: 4,
   },
   progressLabels: {
@@ -206,7 +212,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   progressLabelText: {
-    color: '#888888',
+    color: colors.textMuted,
     fontSize: 12,
   },
   macrosRow: {
@@ -216,15 +222,15 @@ const styles = StyleSheet.create({
   },
   macroBox: {
     flex: 1,
-    backgroundColor: '#1A1A2E',
+    backgroundColor: colors.surfaceAlt,
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2A2A4A',
+    borderColor: colors.border,
     alignItems: 'center',
   },
   macroLabel: {
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     fontSize: 13,
     marginBottom: 4,
   },
@@ -234,26 +240,26 @@ const styles = StyleSheet.create({
   },
   macroTarget: {
     fontSize: 11,
-    color: '#888888',
+    color: colors.textMuted,
     marginTop: 2,
   },
   mealsContainer: {
     gap: 12,
   },
   sectionTitle: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 4,
   },
   mealCard: {
-    backgroundColor: '#111111',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: colors.border,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF4500',
+    borderLeftColor: colors.accent,
   },
   mealHeader: {
     flexDirection: 'row',
@@ -262,24 +268,24 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   mealType: {
-    color: '#FF4500',
+    color: colors.accent,
     fontSize: 12,
     fontWeight: 'bold',
     textTransform: 'uppercase',
   },
   mealCalories: {
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 14,
     fontWeight: 'bold',
   },
   mealName: {
-    color: '#EAEAEA',
+    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 6,
   },
   mealTime: {
-    color: '#888888',
+    color: colors.textMuted,
     fontSize: 13,
     marginBottom: 12,
   },
@@ -288,20 +294,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   mealMacroText: {
-    color: '#A0A0B8',
+    color: colors.textSecondary,
     fontSize: 13,
   },
   fab: {
     position: 'absolute',
-    bottom: 24,
     right: 24,
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#00E676', // Green for adding food
+    backgroundColor: colors.success,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#00E676',
+    shadowColor: colors.success,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,

@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "baa0be9b01540d612be90820e654dccd2e41877f57e65ef1dc51a5387c5eecb9"
     },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+    },
     "git-commit": {
       "source": "github/awesome-copilot",
       "sourceType": "github",

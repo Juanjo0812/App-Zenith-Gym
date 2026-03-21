@@ -5,7 +5,6 @@ import {
   Text, 
   TextInput, 
   TouchableOpacity, 
-  SafeAreaView, 
   KeyboardAvoidingView, 
   Platform,
   Alert,
@@ -15,6 +14,8 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { supabase } from '../lib/supabase';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors } from '../theme/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -60,7 +61,7 @@ const LoginScreen = ({ navigation }: Props) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -139,7 +140,7 @@ const LoginScreen = ({ navigation }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -156,20 +157,20 @@ const styles = StyleSheet.create({
   voltText: {
     fontSize: 70,
     fontWeight: '900',
-    color: '#FF4500',
+    color: colors.accent,
     letterSpacing: -2,
     lineHeight: 70,
   },
   lineSeparator: {
     width: width * 0.6,
     height: 1,
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     marginVertical: 10,
     opacity: 0.5,
   },
   gymClubText: {
     fontSize: 20,
-    color: '#FFFFFF',
+    color: colors.onAccent,
     letterSpacing: 8,
     fontWeight: '300',
   },
@@ -179,12 +180,12 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     marginBottom: 8,
   },
   welcomeSubtitle: {
     fontSize: 16,
-    color: '#888',
+    color: colors.textMuted,
   },
   form: {
     gap: 20,
@@ -195,39 +196,39 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#FF4500',
+    color: colors.accent,
     letterSpacing: 2,
   },
   input: {
-    backgroundColor: '#111',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 16,
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 16,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
   },
   forgotPasswordText: {
-    color: '#FF4500',
+    color: colors.accent,
     fontSize: 14,
   },
   loginButton: {
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     padding: 18,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
-    shadowColor: '#FF4500',
+    shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   loginButtonText: {
-    color: '#FFFFFF',
+    color: colors.onAccent,
     fontSize: 18,
     fontWeight: '900',
     letterSpacing: 2,
@@ -238,11 +239,11 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   footerText: {
-    color: '#888',
+    color: colors.textMuted,
     fontSize: 14,
   },
   signUpText: {
-    color: '#FF4500',
+    color: colors.accent,
     fontSize: 14,
     fontWeight: 'bold',
   },

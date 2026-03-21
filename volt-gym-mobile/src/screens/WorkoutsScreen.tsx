@@ -1,275 +1,121 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, SafeAreaView, ScrollView, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRoutines } from '../context/RoutineContext';
-import { RootStackParamList } from '../navigation/AppNavigator';
 import ScaleTouchable from '../shared/ui/ScaleTouchable';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors } from '../theme/theme';
 
 type Props = {
-  navigation: any; // Using any for quick integration, ideally use BottomTabNavigationProp combined with NativeStackNavigationProp
+  navigation: any;
 };
 
 const WorkoutsScreen = ({ navigation }: Props) => {
-  const { routines, deleteRoutine, deleteExerciseFromRoutine, updateRoutineName, updateExerciseInRoutine } = useRoutines();
-  const [expandedRoutineId, setExpandedRoutineId] = useState<string | null>(routines.length > 0 ? routines[0].id : null);
-
-  // States for editing routine name
-  const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
-  const [editedRoutineName, setEditedRoutineName] = useState('');
-
-  // States for editing exercise
-  const [editingExercise, setEditingExercise] = useState<{
-    routineId: string;
-    exerciseIndex: number;
-    weight: string;
-    reps: string;
-    setsCount: string;
-  } | null>(null);
-
-  const toggleRoutine = (id: string) => {
-    setExpandedRoutineId(expandedRoutineId === id ? null : id);
-  };
-
-  const confirmDeleteRoutine = (id: string, name: string) => {
-    Alert.alert('Eliminar Rutina', `¿Seguro que quieres eliminar "${name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => deleteRoutine(id) }
-    ]);
-  };
-
-  const confirmDeleteExercise = (routineId: string, exerciseIndex: number, name: string) => {
-    Alert.alert('Eliminar Ejercicio', `¿Seguro que quieres eliminar "${name}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => deleteExerciseFromRoutine(routineId, exerciseIndex) }
-    ]);
-  };
-
-  const saveEditedRoutine = () => {
-    if (editingRoutineId && editedRoutineName.trim()) {
-      updateRoutineName(editingRoutineId, editedRoutineName.trim());
-      setEditingRoutineId(null);
-    }
-  };
-
-  const saveEditedExercise = () => {
-    if (editingExercise) {
-      updateExerciseInRoutine(
-        editingExercise.routineId,
-        editingExercise.exerciseIndex,
-        Number(editingExercise.weight) || 0,
-        Number(editingExercise.reps) || 0,
-        Number(editingExercise.setsCount) || 1
-      );
-      setEditingExercise(null);
-    }
-  };
+  const { routines } = useRoutines();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mis Rutinas</Text>
+        <Text style={styles.headerTitle}>Mis entrenos</Text>
         <TouchableOpacity onPress={() => navigation.navigate('ExerciseList')}>
           <MaterialIcons name="search" size={28} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Quick Workout Hero */}
+        <ScaleTouchable
+          style={styles.quickWorkoutCard}
+          onPress={() => navigation.navigate('ActiveWorkout', {})}
+          pressedScale={0.98}
+        >
+          <View style={styles.quickWorkoutContent}>
+            <View style={styles.quickWorkoutIcon}>
+              <MaterialIcons name="flash-on" size={28} color="#FF4500" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.quickWorkoutTitle}>Entreno rápido</Text>
+              <Text style={styles.quickWorkoutSubtitle}>Sin plan, empieza ya</Text>
+            </View>
+            <View style={styles.quickWorkoutArrow}>
+              <MaterialIcons name="arrow-forward" size={22} color="#FF4500" />
+            </View>
+          </View>
+          <View style={styles.quickWorkoutGlow} />
+        </ScaleTouchable>
+
+        {/* Section header */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Mis rutinas</Text>
+          <ScaleTouchable
+            style={styles.createBtn}
+            onPress={() => navigation.navigate('CreateRoutine')}
+          >
+            <MaterialIcons name="add" size={20} color="#FF4500" />
+            <Text style={styles.createBtnText}>Nueva</Text>
+          </ScaleTouchable>
+        </View>
+
+        {/* Routine cards */}
         {routines.map((routine) => {
-          const isExpanded = expandedRoutineId === routine.id;
+          const exerciseCount = routine.exercises.length;
+          const muscleText = routine.muscleGroups.length > 0
+            ? routine.muscleGroups.join(' • ')
+            : 'Sin ejercicios';
 
           return (
-            <View key={routine.id} style={styles.routineCard}>
-              <TouchableOpacity
-                style={styles.cardHeader}
-                activeOpacity={0.7}
-                onPress={() => toggleRoutine(routine.id)}
-              >
-                <View style={styles.cardTitleContainer}>
-                  <Text style={styles.routineName}>{routine.name}</Text>
-                  <Text style={styles.muscleGroups}>{routine.muscleGroups.join(' • ')}</Text>
+            <ScaleTouchable
+              key={routine.id}
+              style={styles.routineCard}
+              onPress={() => navigation.navigate('RoutineDetail', { routineId: routine.id })}
+              pressedScale={0.98}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardIcon}>
+                  <MaterialIcons name="fitness-center" size={22} color="#FF4500" />
                 </View>
-                
-                <View style={styles.headerActions}>
-                  <TouchableOpacity 
-                    style={styles.actionIconBtn}
-                    onPress={() => confirmDeleteRoutine(routine.id, routine.name)}
-                  >
-                    <MaterialIcons name="delete-outline" size={24} color="#FF4500" />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.actionIconBtn}
-                    onPress={() => {
-                      setEditingRoutineId(routine.id);
-                      setEditedRoutineName(routine.name);
-                    }}
-                  >
-                    <MaterialIcons name="edit" size={24} color="#AAA" />
-                  </TouchableOpacity>
-                  <MaterialIcons 
-                    name={isExpanded ? 'expand-less' : 'expand-more'} 
-                    size={28} 
-                    color="#FF4500" 
-                  />
+                <View style={styles.cardInfo}>
+                  <Text style={styles.cardName}>{routine.name}</Text>
+                  <Text style={styles.cardMuscles}>{muscleText}</Text>
+                  <Text style={styles.cardExerciseCount}>
+                    {exerciseCount} {exerciseCount === 1 ? 'ejercicio' : 'ejercicios'}
+                  </Text>
                 </View>
-              </TouchableOpacity>
-
-              {isExpanded && (
-                <View style={styles.exercisesContainer}>
-                  <View style={styles.divider} />
-                  
-                  {routine.exercises.map((exercise, index) => (
-                    <View key={index} style={styles.exerciseItem}>
-                      <View style={styles.exerciseHeader}>
-                        <Text style={styles.exerciseName}>{exercise.name}</Text>
-                        <View style={styles.exerciseActions}>
-                          <TouchableOpacity 
-                            onPress={() => {
-                              setEditingExercise({
-                                routineId: routine.id,
-                                exerciseIndex: index,
-                                weight: exercise.sets[0]?.weight?.toString() || '0',
-                                reps: exercise.sets[0]?.reps?.toString() || '0',
-                                setsCount: exercise.sets.length.toString()
-                              });
-                            }}
-                            style={styles.smallActionBtn}
-                          >
-                            <MaterialIcons name="edit" size={18} color="#AAA" />
-                          </TouchableOpacity>
-                          <TouchableOpacity 
-                            onPress={() => confirmDeleteExercise(routine.id, index, exercise.name)}
-                            style={styles.smallActionBtn}
-                          >
-                            <MaterialIcons name="close" size={18} color="#FF4500" />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                      
-                      <View style={styles.setsTable}>
-                        <View style={styles.tableHead}>
-                          <Text style={styles.tableHeadText}>Set</Text>
-                          <Text style={styles.tableHeadText}>kg</Text>
-                          <Text style={styles.tableHeadText}>Reps</Text>
-                          <Text style={styles.tableHeadText}>✓</Text>
-                        </View>
-                        
-                        {exercise.sets.map((set, setIdx) => (
-                          <View key={setIdx} style={styles.tableRow}>
-                            <Text style={styles.tableCell}>{setIdx + 1}</Text>
-                            <Text style={[styles.tableCell, styles.tableCellData]}>{set.weight}</Text>
-                            <Text style={[styles.tableCell, styles.tableCellData]}>{set.reps}</Text>
-                            <TouchableOpacity style={styles.checkCircle}>
-                              <MaterialIcons name="check" size={14} color="#111" />
-                            </TouchableOpacity>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  ))}
-
-                  <ScaleTouchable 
-                    style={styles.startWorkoutButton}
-                    onPress={() => navigation.navigate('ActiveWorkout')}
+                <View style={styles.cardActions}>
+                  <ScaleTouchable
+                    style={styles.playBtn}
+                    onPress={() => navigation.navigate('ActiveWorkout', { routineId: routine.id })}
                   >
-                    <Text style={styles.startWorkoutText}>Iniciar Entreno</Text>
-                    <MaterialIcons name="play-arrow" size={20} color="#000" />
+                    <MaterialIcons name="play-arrow" size={22} color={colors.onAccent} />
                   </ScaleTouchable>
+                  <MaterialIcons name="chevron-right" size={24} color="#444" />
                 </View>
-              )}
-            </View>
+              </View>
+            </ScaleTouchable>
           );
         })}
+
+        {/* Empty state */}
         {routines.length === 0 && (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No tienes rutinas.{"\n"}Busca ejercicios y añádelos para crear una.</Text>
+            <View style={styles.emptyIconWrap}>
+              <MaterialIcons name="fitness-center" size={48} color="#333" />
+            </View>
+            <Text style={styles.emptyTitle}>No tienes rutinas</Text>
+            <Text style={styles.emptySubtitle}>
+              Crea tu primera rutina para organizar tus entrenos
+            </Text>
+            <ScaleTouchable
+              style={styles.emptyBtn}
+              onPress={() => navigation.navigate('CreateRoutine')}
+            >
+              <MaterialIcons name="add" size={20} color={colors.onAccent} />
+              <Text style={styles.emptyBtnText}>Crear rutina</Text>
+            </ScaleTouchable>
           </View>
         )}
       </ScrollView>
-
-      {/* Edit Routine Modal */}
-      <Modal visible={!!editingRoutineId} transparent animationType="fade">
-        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-          <View style={styles.modalOverlay}>
-            <KeyboardAvoidingView 
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={{ width: '100%', alignItems: 'center' }}
-            >
-              <View style={styles.modalCard}>
-                <Text style={styles.modalTitle}>Editar nombre</Text>
-                <TextInput
-                  style={styles.input}
-                  value={editedRoutineName}
-                  onChangeText={setEditedRoutineName}
-                  placeholder="Nombre de la rutina"
-                  placeholderTextColor="#666"
-                  autoCapitalize="sentences"
-                />
-                <View style={styles.modalActions}>
-                  <TouchableOpacity onPress={() => setEditingRoutineId(null)} style={styles.modalBtn}>
-                    <Text style={styles.modalBtnText}>Cancelar</Text>
-                  </TouchableOpacity>
-                  <ScaleTouchable onPress={saveEditedRoutine} style={[styles.modalBtn, styles.modalBtnPrimary]}>
-                    <Text style={[styles.modalBtnText, styles.modalBtnTextPrimary]}>Guardar</Text>
-                  </ScaleTouchable>
-                </View>
-              </View>
-            </KeyboardAvoidingView>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* Edit Exercise Modal */}
-      <Modal visible={!!editingExercise} transparent animationType="fade">
-        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-          <View style={styles.modalOverlay}>
-            <KeyboardAvoidingView 
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={{ width: '100%', alignItems: 'center' }}
-            >
-              <View style={styles.modalCard}>
-                <Text style={styles.modalTitle}>Editar configuración</Text>
-                
-                <Text style={styles.inputLabel}>Series</Text>
-                <TextInput 
-                  style={styles.input} 
-                  keyboardType="numeric" 
-                  value={editingExercise?.setsCount} 
-                  onChangeText={t => setEditingExercise(prev => prev ? {...prev, setsCount: t} : null)} 
-                  returnKeyType="done"
-                />
-
-                <Text style={styles.inputLabel}>Reps (por set)</Text>
-                <TextInput 
-                  style={styles.input} 
-                  keyboardType="numeric" 
-                  value={editingExercise?.reps} 
-                  onChangeText={t => setEditingExercise(prev => prev ? {...prev, reps: t} : null)} 
-                  returnKeyType="done"
-                />
-
-                <Text style={styles.inputLabel}>kg (por set)</Text>
-                <TextInput 
-                  style={styles.input} 
-                  keyboardType="numeric" 
-                  value={editingExercise?.weight} 
-                  onChangeText={t => setEditingExercise(prev => prev ? {...prev, weight: t} : null)} 
-                  returnKeyType="done"
-                />
-
-                <View style={styles.modalActions}>
-                  <TouchableOpacity onPress={() => setEditingExercise(null)} style={styles.modalBtn}>
-                    <Text style={styles.modalBtnText}>Cancelar</Text>
-                  </TouchableOpacity>
-                  <ScaleTouchable onPress={saveEditedExercise} style={[styles.modalBtn, styles.modalBtnPrimary]}>
-                    <Text style={[styles.modalBtnText, styles.modalBtnTextPrimary]}>Guardar</Text>
-                  </ScaleTouchable>
-                </View>
-              </View>
-            </KeyboardAvoidingView>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
     </SafeAreaView>
   );
 };
@@ -277,222 +123,204 @@ const WorkoutsScreen = ({ navigation }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#0F0F23',
+    backgroundColor: colors.chrome,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1A2E',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FF4500', // VOLT Orange
+    color: colors.accent,
   },
   scrollContent: {
     padding: 20,
-    gap: 16,
-    paddingBottom: 100, // Space for FAB
+    gap: 12,
+    paddingBottom: 100,
   },
-  routineCard: {
-    backgroundColor: '#111111',
+
+  // Quick workout card
+  quickWorkoutCard: {
+    backgroundColor: colors.surface,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#222222',
+    borderWidth: 1.5,
+    borderColor: colors.accentBorder,
     overflow: 'hidden',
+    marginBottom: 8,
   },
-  cardHeader: {
+  quickWorkoutContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    gap: 16,
+    zIndex: 1,
   },
-  cardTitleContainer: {
-    flex: 1,
+  quickWorkoutIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: colors.accentSoft,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  routineName: {
+  quickWorkoutTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    marginBottom: 2,
   },
-  muscleGroups: {
-    fontSize: 13,
-    color: '#A0A0B8',
-  },
-  exercisesContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#2A2A4A',
-    marginBottom: 16,
-  },
-  exerciseItem: {
-    marginBottom: 16,
-  },
-  exerciseName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#EAEAEA',
-    marginBottom: 12,
-  },
-  setsTable: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 8,
-    padding: 12,
-  },
-  tableHead: {
-    flexDirection: 'row',
-    marginBottom: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333333',
-  },
-  tableHeadText: {
-    flex: 1,
-    color: '#888888',
-    fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    paddingVertical: 6,
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  tableCell: {
-    flex: 1,
-    color: '#A0A0B8',
+  quickWorkoutSubtitle: {
     fontSize: 14,
-    textAlign: 'center',
+    color: colors.textMuted,
   },
-  tableCellData: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  checkCircle: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#00E676', // Success color
-    marginHorizontal: 'auto',
-  },
-  startWorkoutButton: {
-    flexDirection: 'row',
-    backgroundColor: '#FF4500',
-    padding: 14,
-    borderRadius: 12,
+  quickWorkoutArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.accentSoft,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 8,
   },
-  startWorkoutText: {
-    color: '#000000',
-    fontWeight: '900',
-    fontSize: 16,
-    letterSpacing: 1,
+  quickWorkoutGlow: {
+    position: 'absolute',
+    top: -40,
+    right: -20,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: colors.accentSoft,
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  actionIconBtn: {
-    padding: 4,
-  },
-  exerciseHeader: {
+
+  // Section header
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginTop: 8,
+    marginBottom: 4,
   },
-  exerciseActions: {
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  createBtn: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: colors.accentSoft,
+  },
+  createBtnText: {
+    color: colors.accent,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  // Routine cards
+  routineCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 14,
+  },
+  cardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.accentSoft,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardInfo: {
+    flex: 1,
+  },
+  cardName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  cardMuscles: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 2,
+  },
+  cardExerciseCount: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
-  smallActionBtn: {
-    padding: 4,
+  playBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: colors.accent,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+
+  // Empty state
   emptyContainer: {
     padding: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyText: {
-    color: '#888',
-    textAlign: 'center',
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+  emptyIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: '#1A1A1A',
-    width: '100%',
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFF',
     marginBottom: 20,
   },
-  input: {
-    backgroundColor: '#0F0F0F',
-    borderWidth: 1,
-    borderColor: '#333',
-    borderRadius: 8,
-    padding: 12,
-    color: '#FFF',
-    marginBottom: 16,
-    fontSize: 16,
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    marginBottom: 8,
   },
-  inputLabel: {
-    color: '#CCC',
-    fontSize: 12,
-    marginBottom: 6,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 8,
-  },
-  modalBtn: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  modalBtnPrimary: {
-    backgroundColor: '#FF4500',
-  },
-  modalBtnText: {
-    color: '#AAA',
-    fontWeight: 'bold',
+  emptySubtitle: {
+    color: colors.textMuted,
+    textAlign: 'center',
     fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 24,
   },
-  modalBtnTextPrimary: {
-    color: '#000',
-  }
+  emptyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.accent,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 14,
+  },
+  emptyBtnText: {
+    color: colors.onAccent,
+    fontWeight: '800',
+    fontSize: 15,
+  },
 });
 
 export default WorkoutsScreen;

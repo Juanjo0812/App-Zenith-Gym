@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet, View, Text, SafeAreaView, ScrollView,
+  StyleSheet, View, Text, ScrollView,
   TouchableOpacity, TextInput, Alert, ActivityIndicator,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { workoutApi, Exercise, CompleteSessionResponse } from '../features/workouts/api/workoutApi';
+import { useRoutines } from '../context/RoutineContext';
 import ScaleTouchable from '../shared/ui/ScaleTouchable';
+import RestTimerOverlay from '../shared/ui/RestTimerOverlay';
+import WorkoutTimer from '../shared/ui/WorkoutTimer';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, getInsetBottomPadding } from '../theme/theme';
 
 interface SetEntry {
   reps: string;
@@ -24,18 +29,58 @@ interface Props {
   route: any;
 }
 
+const DEFAULT_REST_SECONDS = 90;
+
 const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
+  const insets = useSafeAreaInsets();
+  const routineId: string | undefined = route.params?.routineId;
+  const { getRoutineById } = useRoutines();
+
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [exerciseBlocks, setExerciseBlocks] = useState<ExerciseBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
+  const [timerRunning, setTimerRunning] = useState(false);
 
-  // Start a new session on mount
+  // Rest timer state
+  const [showRestTimer, setShowRestTimer] = useState(false);
+  const [restDuration, setRestDuration] = useState(DEFAULT_REST_SECONDS);
+
+  const isQuickWorkout = !routineId;
+
+  // Start session and pre-load routine exercises
   useEffect(() => {
     const initSession = async () => {
       try {
-        const res = await workoutApi.startSession();
+        const res = await workoutApi.startSession(routineId);
         setSessionId(res.session_id);
+
+        // Pre-load exercises from routine
+        if (routineId) {
+          const routine = getRoutineById(routineId);
+          if (routine && routine.exercises.length > 0) {
+            const blocks: ExerciseBlock[] = routine.exercises.map((re) => ({
+              exercise: {
+                id: re.exerciseId,
+                name: re.name,
+                primary_muscle: '', // Not critical for active workout display
+                secondary_muscles: [],
+                equipment: null,
+                difficulty: null,
+                instructions: null,
+                video_url: null,
+              },
+              sets: re.sets.map((s) => ({
+                reps: s.reps.toString(),
+                weight: s.weight.toString(),
+                logged: false,
+              })),
+            }));
+            setExerciseBlocks(blocks);
+          }
+        }
+
+        setTimerRunning(true);
       } catch (err) {
         console.error(err);
         Alert.alert('Error', 'No se pudo iniciar la sesión. Verifica tu conexión.');
@@ -47,11 +92,10 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
     initSession();
   }, []);
 
-  // Listen for exercise additions from ExerciseListScreen
+  // Listen for exercise additions from ExercisePicker
   useEffect(() => {
     const addExercise: Exercise | undefined = route.params?.addExercise;
     if (addExercise) {
-      // Avoid duplicates
       const alreadyAdded = exerciseBlocks.some((b) => b.exercise.id === addExercise.id);
       if (!alreadyAdded) {
         setExerciseBlocks((prev) => [
@@ -59,7 +103,6 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
           { exercise: addExercise, sets: [{ reps: '', weight: '', logged: false }] },
         ]);
       }
-      // Clear the param to avoid re-adding
       navigation.setParams({ addExercise: undefined });
     }
   }, [route.params?.addExercise]);
@@ -67,10 +110,28 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
   const addSet = (blockIdx: number) => {
     setExerciseBlocks((prev) => {
       const updated = [...prev];
+      const lastSet = updated[blockIdx].sets[updated[blockIdx].sets.length - 1];
       updated[blockIdx] = {
         ...updated[blockIdx],
-        sets: [...updated[blockIdx].sets, { reps: '', weight: '', logged: false }],
+        sets: [
+          ...updated[blockIdx].sets,
+          {
+            reps: lastSet?.reps || '',
+            weight: lastSet?.weight || '',
+            logged: false,
+          },
+        ],
       };
+      return updated;
+    });
+  };
+
+  const removeSet = (blockIdx: number, setIdx: number) => {
+    setExerciseBlocks((prev) => {
+      const updated = [...prev];
+      const sets = updated[blockIdx].sets.filter((_, i) => i !== setIdx);
+      if (sets.length === 0) return prev; // Don't allow removing all sets
+      updated[blockIdx] = { ...updated[blockIdx], sets };
       return updated;
     });
   };
@@ -101,7 +162,7 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
       const res = await workoutApi.logSet(sessionId, block.exercise.id, {
         reps,
         weight_kg: weight,
-        rest_seconds: 60
+        rest_seconds: restDuration,
       });
       setExerciseBlocks((prev) => {
         const updated = [...prev];
@@ -110,10 +171,31 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
         updated[blockIdx] = { ...updated[blockIdx], sets };
         return updated;
       });
+
+      // Show rest timer after logging a set
+      setShowRestTimer(true);
     } catch (err) {
       console.error(err);
       Alert.alert('Error', 'No se pudo registrar el set.');
     }
+  };
+
+  const removeExercise = (blockIdx: number) => {
+    const block = exerciseBlocks[blockIdx];
+    Alert.alert(
+      'Eliminar ejercicio',
+      `¿Quitar "${block.exercise.name}" del entreno?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => {
+            setExerciseBlocks((prev) => prev.filter((_, i) => i !== blockIdx));
+          },
+        },
+      ],
+    );
   };
 
   const handleComplete = async () => {
@@ -129,16 +211,18 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
     }
 
     setCompleting(true);
+    setTimerRunning(false);
     try {
       const result: CompleteSessionResponse = await workoutApi.completeSession(sessionId);
       Alert.alert(
-        result.leveled_up ? '🎉 ¡LEVEL UP!' : '⚡ ¡Entrenamiento Completo!',
+        result.leveled_up ? '🎉 ¡LEVEL UP!' : '⚡ ¡Entrenamiento completo!',
         `XP ganada: +${result.xp_earned}\nXP total: ${result.new_total_xp}\nNivel: ${result.new_level}`,
         [{ text: '¡Genial!', onPress: () => navigation.goBack() }],
       );
     } catch (err) {
       console.error(err);
       Alert.alert('Error', 'No se pudo completar la sesión.');
+      setTimerRunning(true);
     } finally {
       setCompleting(false);
     }
@@ -148,22 +232,51 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
     navigation.navigate('ExerciseList', { sessionId });
   };
 
+  const handleCloseWorkout = () => {
+    const totalSetsLogged = exerciseBlocks.reduce(
+      (sum, b) => sum + b.sets.filter((s) => s.logged).length,
+      0,
+    );
+    if (totalSetsLogged > 0) {
+      Alert.alert(
+        'Descartar entreno',
+        '¿Seguro que quieres salir? Perderás los sets no guardados.',
+        [
+          { text: 'Continuar entreno', style: 'cancel' },
+          { text: 'Descartar', style: 'destructive', onPress: () => navigation.goBack() },
+        ],
+      );
+    } else {
+      navigation.goBack();
+    }
+  };
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#FF4500" style={{ flex: 1 }} />
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        <ActivityIndicator size="large" color={colors.accent} style={{ flex: 1 }} />
       </SafeAreaView>
     );
   }
 
+  const totalSetsLogged = exerciseBlocks.reduce(
+    (sum, b) => sum + b.sets.filter((s) => s.logged).length,
+    0,
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={handleCloseWorkout}>
           <MaterialIcons name="close" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Entreno Activo</Text>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>
+            {isQuickWorkout ? 'Entreno rápido' : 'Entreno activo'}
+          </Text>
+          <WorkoutTimer running={timerRunning} />
+        </View>
         <View style={styles.sessionBadge}>
           <View style={styles.liveDot} />
           <Text style={styles.sessionText}>EN VIVO</Text>
@@ -171,6 +284,16 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Rest Timer */}
+        {showRestTimer && (
+          <RestTimerOverlay
+            durationSeconds={restDuration}
+            onComplete={() => setShowRestTimer(false)}
+            onSkip={() => setShowRestTimer(false)}
+            onAdjust={(d) => setRestDuration(d)}
+          />
+        )}
+
         {exerciseBlocks.length === 0 ? (
           <View style={styles.emptyState}>
             <MaterialIcons name="fitness-center" size={48} color="#333" />
@@ -180,67 +303,84 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
             </Text>
           </View>
         ) : (
-          exerciseBlocks.map((block, blockIdx) => (
-            <View key={block.exercise.id} style={styles.exerciseCard}>
-              <Text style={styles.exerciseName}>{block.exercise.name}</Text>
-              <Text style={styles.muscleLabel}>{block.exercise.primary_muscle}</Text>
+          exerciseBlocks.map((block, blockIdx) => {
+            const completedSets = block.sets.filter((s) => s.logged).length;
+            const totalSets = block.sets.length;
 
-              {/* Sets Table */}
-              <View style={styles.setsTable}>
-                <View style={styles.tableHead}>
-                  <Text style={[styles.thText, { flex: 0.5 }]}>Set</Text>
-                  <Text style={styles.thText}>kg</Text>
-                  <Text style={styles.thText}>Reps</Text>
-                  <Text style={[styles.thText, { flex: 0.6 }]}>✓</Text>
-                </View>
-
-                {block.sets.map((set, setIdx) => (
-                  <View key={setIdx} style={styles.tableRow}>
-                    <Text style={[styles.cellText, { flex: 0.5 }]}>{setIdx + 1}</Text>
-                    <TextInput
-                      style={[styles.cellInput, set.logged && styles.cellInputLogged]}
-                      value={set.weight}
-                      onChangeText={(v) => updateSet(blockIdx, setIdx, 'weight', v)}
-                      keyboardType="numeric"
-                      placeholder="0"
-                      placeholderTextColor="#555"
-                      editable={!set.logged}
-                    />
-                    <TextInput
-                      style={[styles.cellInput, set.logged && styles.cellInputLogged]}
-                      value={set.reps}
-                      onChangeText={(v) => updateSet(blockIdx, setIdx, 'reps', v)}
-                      keyboardType="numeric"
-                      placeholder="0"
-                      placeholderTextColor="#555"
-                      editable={!set.logged}
-                    />
-                    <TouchableOpacity
-                      style={[styles.checkBtn, set.logged && styles.checkBtnDone]}
-                      onPress={() => !set.logged && logSet(blockIdx, setIdx)}
-                      disabled={set.logged}
-                    >
-                      <MaterialIcons
-                        name={set.logged ? 'check' : 'save'}
-                        size={16}
-                        color={set.logged ? '#000' : '#FFF'}
-                      />
+            return (
+              <View key={`${block.exercise.id}-${blockIdx}`} style={styles.exerciseCard}>
+                <View style={styles.exerciseHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.exerciseName}>{block.exercise.name}</Text>
+                    {block.exercise.primary_muscle ? (
+                      <Text style={styles.muscleLabel}>{block.exercise.primary_muscle}</Text>
+                    ) : null}
+                  </View>
+                  <View style={styles.exerciseHeaderRight}>
+                    <Text style={styles.setsProgress}>{completedSets}/{totalSets}</Text>
+                    <TouchableOpacity onPress={() => removeExercise(blockIdx)} style={styles.removeBtn}>
+                      <MaterialIcons name="close" size={18} color="#FF4500" />
                     </TouchableOpacity>
                   </View>
-                ))}
-              </View>
+                </View>
 
-              <TouchableOpacity style={styles.addSetBtn} onPress={() => addSet(blockIdx)}>
-                <MaterialIcons name="add" size={16} color="#FF4500" />
-                <Text style={styles.addSetText}>Añadir serie</Text>
-              </TouchableOpacity>
-            </View>
-          ))
+                {/* Sets Table */}
+                <View style={styles.setsTable}>
+                  <View style={styles.tableHead}>
+                    <Text style={[styles.thText, { flex: 0.5 }]}>Set</Text>
+                    <Text style={styles.thText}>kg</Text>
+                    <Text style={styles.thText}>Reps</Text>
+                    <Text style={[styles.thText, { flex: 0.6 }]}>✓</Text>
+                  </View>
+
+                  {block.sets.map((set, setIdx) => (
+                    <View key={setIdx} style={styles.tableRow}>
+                      <Text style={[styles.cellText, { flex: 0.5 }]}>{setIdx + 1}</Text>
+                      <TextInput
+                        style={[styles.cellInput, set.logged && styles.cellInputLogged]}
+                        value={set.weight}
+                        onChangeText={(v) => updateSet(blockIdx, setIdx, 'weight', v)}
+                        keyboardType="numeric"
+                        placeholder="0"
+                        placeholderTextColor="#555"
+                        editable={!set.logged}
+                      />
+                      <TextInput
+                        style={[styles.cellInput, set.logged && styles.cellInputLogged]}
+                        value={set.reps}
+                        onChangeText={(v) => updateSet(blockIdx, setIdx, 'reps', v)}
+                        keyboardType="numeric"
+                        placeholder="0"
+                        placeholderTextColor="#555"
+                        editable={!set.logged}
+                      />
+                      <TouchableOpacity
+                        style={[styles.checkBtn, set.logged && styles.checkBtnDone]}
+                        onPress={() => !set.logged && logSet(blockIdx, setIdx)}
+                        disabled={set.logged}
+                      >
+                        <MaterialIcons
+                          name={set.logged ? 'check' : 'save'}
+                          size={16}
+                          color={set.logged ? colors.onAccent : colors.textPrimary}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+
+                <TouchableOpacity style={styles.addSetBtn} onPress={() => addSet(blockIdx)}>
+                  <MaterialIcons name="add" size={16} color="#FF4500" />
+                  <Text style={styles.addSetText}>Añadir serie</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })
         )}
       </ScrollView>
 
       {/* Bottom Bar */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { paddingBottom: getInsetBottomPadding(16, insets.bottom) }]}>
         <ScaleTouchable style={styles.addExerciseBtn} onPress={handleAddExercise}>
           <MaterialIcons name="add-circle-outline" size={20} color="#FF4500" />
           <Text style={styles.addExerciseBtnText}>Ejercicio</Text>
@@ -252,11 +392,11 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
           disabled={completing}
         >
           {completing ? (
-            <ActivityIndicator size="small" color="#000" />
+            <ActivityIndicator size="small" color={colors.onAccent} />
           ) : (
             <>
               <Text style={styles.completeBtnText}>Completar</Text>
-              <MaterialIcons name="check-circle" size={20} color="#000" />
+              <MaterialIcons name="check-circle" size={20} color={colors.onAccent} />
             </>
           )}
         </ScaleTouchable>
@@ -266,68 +406,81 @@ const ActiveWorkoutScreen = ({ navigation, route }: Props) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 16, backgroundColor: '#0F0F23', borderBottomWidth: 1, borderBottomColor: '#1A1A2E',
+    padding: 16, backgroundColor: colors.chrome, borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
+  headerCenter: { alignItems: 'center', gap: 2 },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', color: colors.textPrimary },
   sessionBadge: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,69,0,0.15)',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.accentSoft,
     paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, gap: 6,
   },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF4500' },
-  sessionText: { color: '#FF4500', fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent },
+  sessionText: { color: colors.accent, fontSize: 11, fontWeight: '900', letterSpacing: 1 },
   scrollContent: { padding: 16, gap: 16, paddingBottom: 120 },
   emptyState: { alignItems: 'center', paddingTop: 80, gap: 12 },
   emptyTitle: { color: '#AAA', fontSize: 17, fontWeight: '600' },
   emptySubtitle: { color: '#666', fontSize: 14, textAlign: 'center', paddingHorizontal: 40 },
   exerciseCard: {
-    backgroundColor: '#111', borderRadius: 16, padding: 20,
-    borderWidth: 1, borderColor: '#222',
+    backgroundColor: colors.surface, borderRadius: 16, padding: 20,
+    borderWidth: 1, borderColor: colors.border,
   },
-  exerciseName: { fontSize: 18, fontWeight: 'bold', color: '#FFF', marginBottom: 4 },
-  muscleLabel: { fontSize: 13, color: '#FF4500', marginBottom: 16, fontWeight: '600' },
-  setsTable: { backgroundColor: '#1A1A1A', borderRadius: 10, padding: 12 },
+  exerciseHeader: {
+    flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  exerciseHeaderRight: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+  },
+  setsProgress: {
+    fontSize: 13, fontWeight: '700', color: colors.textMuted,
+    backgroundColor: colors.surfaceAlt, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
+  },
+  removeBtn: { padding: 4 },
+  exerciseName: { fontSize: 18, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 4 },
+  muscleLabel: { fontSize: 13, color: colors.accent, fontWeight: '600' },
+  setsTable: { backgroundColor: colors.surfaceAlt, borderRadius: 10, padding: 12 },
   tableHead: {
     flexDirection: 'row', paddingBottom: 8, marginBottom: 8,
-    borderBottomWidth: 1, borderBottomColor: '#333',
+    borderBottomWidth: 1, borderBottomColor: colors.border,
   },
-  thText: { flex: 1, color: '#888', fontSize: 12, fontWeight: 'bold', textAlign: 'center' },
+  thText: { flex: 1, color: colors.textMuted, fontSize: 12, fontWeight: 'bold', textAlign: 'center' },
   tableRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 4 },
-  cellText: { flex: 1, color: '#AAA', fontSize: 14, textAlign: 'center' },
+  cellText: { flex: 1, color: colors.textSecondary, fontSize: 14, textAlign: 'center' },
   cellInput: {
-    flex: 1, backgroundColor: '#222', color: '#FFF', textAlign: 'center',
+    flex: 1, backgroundColor: colors.surface, color: colors.textPrimary, textAlign: 'center',
     borderRadius: 8, paddingVertical: 8, fontSize: 15, fontWeight: '600',
   },
-  cellInputLogged: { backgroundColor: '#1A2D1A', color: '#00E676' },
+  cellInputLogged: { backgroundColor: '#1A2D1A', color: colors.success },
   checkBtn: {
     flex: 0.6, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#333', borderRadius: 8, paddingVertical: 8,
+    backgroundColor: colors.surfaceAlt, borderRadius: 8, paddingVertical: 8,
   },
-  checkBtnDone: { backgroundColor: '#00E676' },
+  checkBtnDone: { backgroundColor: colors.success },
   addSetBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 6, paddingVertical: 10, marginTop: 12,
-    borderWidth: 1, borderColor: '#333', borderRadius: 10, borderStyle: 'dashed',
+    borderWidth: 1, borderColor: colors.border, borderRadius: 10, borderStyle: 'dashed',
   },
-  addSetText: { color: '#FF4500', fontSize: 13, fontWeight: '600' },
+  addSetText: { color: colors.accent, fontSize: 13, fontWeight: '600' },
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     flexDirection: 'row', padding: 16, gap: 12,
-    backgroundColor: '#0F0F23', borderTopWidth: 1, borderTopColor: '#1A1A2E',
+    backgroundColor: colors.chrome, borderTopWidth: 1, borderTopColor: colors.border,
   },
   addExerciseBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 6, paddingVertical: 14, borderRadius: 12,
-    borderWidth: 1, borderColor: '#FF4500',
+    borderWidth: 1, borderColor: colors.accent,
   },
-  addExerciseBtnText: { color: '#FF4500', fontWeight: '700', fontSize: 14 },
+  addExerciseBtnText: { color: colors.accent, fontWeight: '700', fontSize: 14 },
   completeBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, paddingVertical: 14, borderRadius: 12, backgroundColor: '#00E676',
+    gap: 6, paddingVertical: 14, borderRadius: 12, backgroundColor: colors.success,
   },
-  completeBtnText: { color: '#000', fontWeight: '900', fontSize: 14 },
+  completeBtnText: { color: colors.onAccent, fontWeight: '900', fontSize: 14 },
 });
 
 export default ActiveWorkoutScreen;

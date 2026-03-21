@@ -4,7 +4,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,10 +12,12 @@ import {
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { userService } from '../services/userService';
+import { colors } from '../theme/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
@@ -117,7 +118,7 @@ const RegisterScreen = ({ navigation }: Props) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
@@ -245,7 +246,7 @@ const RegisterScreen = ({ navigation }: Props) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   backButtonText: {
-    color: '#FF4500',
+    color: colors.accent,
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -270,12 +271,12 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     marginBottom: 8,
   },
   welcomeSubtitle: {
     fontSize: 16,
-    color: '#888',
+    color: colors.textMuted,
   },
   form: {
     gap: 20,
@@ -286,25 +287,25 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#FF4500',
+    color: colors.accent,
     letterSpacing: 2,
   },
   input: {
-    backgroundColor: '#111',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 16,
-    color: '#FFFFFF',
+    color: colors.textPrimary,
     fontSize: 16,
   },
   registerButton: {
-    backgroundColor: '#FF4500',
+    backgroundColor: colors.accent,
     padding: 18,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 20,
-    shadowColor: '#FF4500',
+    shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -314,7 +315,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   registerButtonText: {
-    color: '#FFFFFF',
+    color: colors.onAccent,
     fontSize: 18,
     fontWeight: '900',
     letterSpacing: 2,

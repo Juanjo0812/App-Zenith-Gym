@@ -1,6 +1,8 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, getInsetAdjustedHeight, metrics } from '../theme/theme';
 
 // We will import screens here once created
 import HomeScreen from '../screens/HomeScreen';
@@ -12,19 +14,21 @@ import ProfileScreen from '../screens/ProfileScreen';
 const Tab = createBottomTabNavigator();
 
 const BottomTabNavigator = () => {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#0F0F23', // Dark background
-          borderTopColor: '#1A1A2E',
-          height: 60,
-          paddingBottom: 8,
+          backgroundColor: colors.chrome,
+          borderTopColor: colors.border,
+          height: getInsetAdjustedHeight(metrics.tabBarBaseHeight, insets.bottom),
+          paddingBottom: insets.bottom > 0 ? insets.bottom - 10 : metrics.tabBarBasePaddingBottom,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: '#FF4500', // VOLT Orange
-        tabBarInactiveTintColor: '#A0A0B8', // Gray
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarIcon: ({ color, size }) => {
           let iconName: React.ComponentProps<typeof MaterialIcons>['name'];
 
