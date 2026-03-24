@@ -56,10 +56,7 @@ const AppNavigator = () => {
         component={NutritionScreen} 
         options={{
           presentation: 'modal',
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.chrome },
-          headerTintColor: colors.textPrimary,
-          headerTitle: 'Plan de nutrición',
+          headerShown: false,
         }}
       />
 

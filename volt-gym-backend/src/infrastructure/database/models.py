@@ -29,6 +29,7 @@ class UserModel(Base):
     meal_plans = relationship("MealPlanModel", back_populates="user")
     meals_logged = relationship("MealLogModel", back_populates="user")
     recovery_logs = relationship("RecoveryLogModel", back_populates="user")
+    water_logs = relationship("WaterLogModel", back_populates="user")
     created_exercises = relationship("ExerciseModel", back_populates="creator")
 
 class RoleModel(Base):
@@ -138,6 +139,8 @@ class MealPlanModel(Base):
     target_protein = Column(Integer)
     target_carbs = Column(Integer)
     target_fats = Column(Integer)
+    water_ml = Column(Integer, default=0)
+    notes = Column(String, nullable=True)
     date = Column(Date, nullable=False)
 
     user = relationship("UserModel", back_populates="meal_plans")
@@ -152,9 +155,22 @@ class MealLogModel(Base):
     protein = Column(Integer)
     carbs = Column(Integer)
     fats = Column(Integer)
+    meal_type = Column(String(50), default="otro")  # desayuno, almuerzo, cena, snack, otro
+    serving_size = Column(String(100), nullable=True)
+    notes = Column(String, nullable=True)
     logged_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("UserModel", back_populates="meals_logged")
+
+class WaterLogModel(Base):
+    __tablename__ = "water_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    amount_ml = Column(Integer, nullable=False)
+    logged_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("UserModel", back_populates="water_logs")
 
 class RecoveryLogModel(Base):
     __tablename__ = "recovery_logs"
