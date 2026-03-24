@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from src.adapters.api.v1 import ai_coach, classes, exercises, nutrition, users, workouts
+from src.adapters.api.v1 import ai_coach, classes, exercises, nutrition, progress, users, workouts
 
 # Include API routers
 app.include_router(workouts.router, prefix="/api/v1")
@@ -25,6 +25,7 @@ app.include_router(exercises.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
 app.include_router(classes.router, prefix="/api/v1")
 app.include_router(nutrition.router, prefix="/api/v1")
+app.include_router(progress.router, prefix="/api/v1")
 
 
 @app.get("/health")

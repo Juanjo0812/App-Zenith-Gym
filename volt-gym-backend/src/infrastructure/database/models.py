@@ -30,6 +30,9 @@ class UserModel(Base):
     meals_logged = relationship("MealLogModel", back_populates="user")
     recovery_logs = relationship("RecoveryLogModel", back_populates="user")
     water_logs = relationship("WaterLogModel", back_populates="user")
+    weight_logs_entries = relationship("WeightLogModel", back_populates="user")
+    user_badges = relationship("UserBadgeModel", back_populates="user")
+    challenge_progress = relationship("UserChallengeProgressModel", back_populates="user")
     created_exercises = relationship("ExerciseModel", back_populates="creator")
 
 class RoleModel(Base):
@@ -232,3 +235,73 @@ class ClassEnrollmentModel(Base):
     scheduled_class = relationship("ScheduledClassModel", back_populates="enrollments")
     user = relationship("UserModel")
 
+
+class WeightLogModel(Base):
+    __tablename__ = "weight_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    weight_kg = Column(Numeric(precision=5, scale=2), nullable=False)
+    date = Column(Date, nullable=False)
+    notes = Column(String, nullable=True)
+    logged_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("UserModel", back_populates="weight_logs_entries")
+
+
+class BadgeModel(Base):
+    __tablename__ = "badges"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), unique=True, nullable=False)
+    description = Column(String, nullable=True)
+    icon = Column(String(50), nullable=False, default="star")
+    condition_type = Column(String(50), nullable=False)
+    condition_value = Column(Integer, nullable=False, default=1)
+    xp_reward = Column(Integer, nullable=False, default=50)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user_badges = relationship("UserBadgeModel", back_populates="badge")
+
+
+class UserBadgeModel(Base):
+    __tablename__ = "user_badges"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    badge_id = Column(UUID(as_uuid=True), ForeignKey("badges.id", ondelete="CASCADE"), nullable=False)
+    unlocked_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("UserModel", back_populates="user_badges")
+    badge = relationship("BadgeModel", back_populates="user_badges")
+
+
+class ChallengeModel(Base):
+    __tablename__ = "challenges"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), nullable=False)
+    description = Column(String, nullable=True)
+    goal_type = Column(String(50), nullable=False)
+    goal_value = Column(Integer, nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    xp_reward = Column(Integer, nullable=False, default=100)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user_progress = relationship("UserChallengeProgressModel", back_populates="challenge")
+
+
+class UserChallengeProgressModel(Base):
+    __tablename__ = "user_challenge_progress"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    challenge_id = Column(UUID(as_uuid=True), ForeignKey("challenges.id", ondelete="CASCADE"), nullable=False)
+    current_value = Column(Integer, nullable=False, default=0)
+    completed_at = Column(DateTime, nullable=True)
+    joined_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("UserModel", back_populates="challenge_progress")
+    challenge = relationship("ChallengeModel", back_populates="user_progress")

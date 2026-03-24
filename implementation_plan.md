@@ -51,6 +51,7 @@ The Volt-Gym platform is designed to connect members, trainers, and gym operator
 ### 2.6 Progress Tracking
 
 - Dashboard visualizations for: Weight progression, strength gains (1RM charts), workout frequency calendars, and body measurements.
+- *Status: Implemented (Backend + Frontend, replaced mock data).*
 
 ### 2.7 Smart Training Recommendations
 
@@ -62,6 +63,7 @@ The Volt-Gym platform is designed to connect members, trainers, and gym operator
 - **Mechanics**: Experience points (XP) and level-ups, unlocking achievements and badges.
 - **Social/Competitive**: Gym challenges (e.g., 30-day consistency), strength leaderboards, weekly competitions, and streak tracking.
 - **Rewards**: Support for physical rewards (discounts, merch, recognition).
+- *Status: Core mechanics implemented (Backend + Frontend, replaced mock data).*
 
 ### 2.9 Community and Gym Interaction
 
