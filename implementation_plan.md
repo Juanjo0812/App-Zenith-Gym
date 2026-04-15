@@ -1,4 +1,4 @@
-# ⚡ Volt-Gym — Product & Architecture Plan (MVP Focus)
+﻿# âš¡ Zenith â€” Product & Architecture Plan (MVP Focus)
 
 > **A modern, AI-powered fitness ecosystem for real gym environments, starting as a scalable Minimum Viable Product (MVP).**
 
@@ -6,7 +6,7 @@
 
 ## 1. Product Vision & Strategy
 
-The Volt-Gym platform is designed to connect members, trainers, and gym operators through highly engaging, personalized experiences. This initial MVP is engineered to launch quickly and cost-effectively utilizing free-tier managed databases and established LLM APIs, while maintaining a robust, scalable architecture for future growth.
+The Zenith platform is designed to connect members, trainers, and gym operators through highly engaging, personalized experiences. This initial MVP is engineered to launch quickly and cost-effectively utilizing free-tier managed databases and established LLM APIs, while maintaining a robust, scalable architecture for future growth.
 
 ### 1.1 Core Objectives
 
@@ -115,52 +115,52 @@ We employ **Domain-Driven Design (DDD)** combined with **Clean Architecture/Hexa
 ## 4. Backend Service Architecture (Clean Architecture)
 
 ```
-volt-gym-backend/
-├── src/
-│   ├── main.py                     # FastAPI application factory
-│   ├── config/                     # Environment variables, DB connection settings
-│   │   ├── settings.py
-│   │   ├── alembic.py              # Alembic URL configuration
-│   │   └── dependencies.py         # Dependency Injection
-│   │
-│   ├── domain/                     # 🔵 CORE BUSINESS LOGIC (Entities & Interfaces)
-│   │   ├── user/                   # Identity bounded context
-│   │   ├── workout/                # Fitness bounded context
-│   │   ├── nutrition/              # Diet bounded context
-│   │   ├── classes/                # Group classes bounded context
-│   │   ├── gamification/           # Badges, XP bounded context
-│   │   └── ai/                     # Intelligence bounded context
-│   │
-│   ├── use_cases/                  # 🟢 APPLICATION LOGIC (Interactors)
-│   │   ├── generate_workout.py
-│   │   ├── log_session_apply_xp.py # Cross-domain orchestration
-│   │   └── update_recovery_state.py
-│   │
-│   ├── adapters/                   # 🟡 INTERFACE ADAPTERS
-│   │   ├── api/                    # FastAPI Routes (Controllers)
-│   │   │   ├── v1/
-│   │   │   │   ├── workouts.py
-│   │   │   │   ├── exercises.py
-│   │   │   │   ├── users.py
-│   │   │   │   ├── classes.py
-│   │   │   │   └── ai_coach.py
-│   │   ├── repositories/           # SQLAlchemy / asyncpg Repositories
-│   │   │   ├── sqlalchemy_workout_repo.py
-│   │   │   ├── sqlalchemy_user_repo.py
-│   │   │   └── sqlalchemy_exercise_repo.py
-│   │   └── gateways/               # External APIs
-│   │       ├── llm_gateway.py      # OpenRouter / Groq LLM adapter
-│   │       └── health_gateway.py   # HealthKit data normalization
-│   │
-│   └── infrastructure/             # 🔴 FRAMEWORKS & DRIVERS
-│       ├── database/               # SQLAlchemy Base, Migrations (Alembic)
-│       ├── redis/                  # Redis client
-│       └── auth/                   # Supabase JWT validation
-│
-├── tests/
-├── Dockerfile
-├── requirements.txt
-└── alembic/                        # Migration scripts
+Zenith-backend/
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ main.py                     # FastAPI application factory
+â”‚   â”œâ”€â”€ config/                     # Environment variables, DB connection settings
+â”‚   â”‚   â”œâ”€â”€ settings.py
+â”‚   â”‚   â”œâ”€â”€ alembic.py              # Alembic URL configuration
+â”‚   â”‚   â””â”€â”€ dependencies.py         # Dependency Injection
+â”‚   â”‚
+â”‚   â”œâ”€â”€ domain/                     # ðŸ”µ CORE BUSINESS LOGIC (Entities & Interfaces)
+â”‚   â”‚   â”œâ”€â”€ user/                   # Identity bounded context
+â”‚   â”‚   â”œâ”€â”€ workout/                # Fitness bounded context
+â”‚   â”‚   â”œâ”€â”€ nutrition/              # Diet bounded context
+â”‚   â”‚   â”œâ”€â”€ classes/                # Group classes bounded context
+â”‚   â”‚   â”œâ”€â”€ gamification/           # Badges, XP bounded context
+â”‚   â”‚   â””â”€â”€ ai/                     # Intelligence bounded context
+â”‚   â”‚
+â”‚   â”œâ”€â”€ use_cases/                  # ðŸŸ¢ APPLICATION LOGIC (Interactors)
+â”‚   â”‚   â”œâ”€â”€ generate_workout.py
+â”‚   â”‚   â”œâ”€â”€ log_session_apply_xp.py # Cross-domain orchestration
+â”‚   â”‚   â””â”€â”€ update_recovery_state.py
+â”‚   â”‚
+â”‚   â”œâ”€â”€ adapters/                   # ðŸŸ¡ INTERFACE ADAPTERS
+â”‚   â”‚   â”œâ”€â”€ api/                    # FastAPI Routes (Controllers)
+â”‚   â”‚   â”‚   â”œâ”€â”€ v1/
+â”‚   â”‚   â”‚   â”‚   â”œâ”€â”€ workouts.py
+â”‚   â”‚   â”‚   â”‚   â”œâ”€â”€ exercises.py
+â”‚   â”‚   â”‚   â”‚   â”œâ”€â”€ users.py
+â”‚   â”‚   â”‚   â”‚   â”œâ”€â”€ classes.py
+â”‚   â”‚   â”‚   â”‚   â””â”€â”€ ai_coach.py
+â”‚   â”‚   â”œâ”€â”€ repositories/           # SQLAlchemy / asyncpg Repositories
+â”‚   â”‚   â”‚   â”œâ”€â”€ sqlalchemy_workout_repo.py
+â”‚   â”‚   â”‚   â”œâ”€â”€ sqlalchemy_user_repo.py
+â”‚   â”‚   â”‚   â””â”€â”€ sqlalchemy_exercise_repo.py
+â”‚   â”‚   â””â”€â”€ gateways/               # External APIs
+â”‚   â”‚       â”œâ”€â”€ llm_gateway.py      # OpenRouter / Groq LLM adapter
+â”‚   â”‚       â””â”€â”€ health_gateway.py   # HealthKit data normalization
+â”‚   â”‚
+â”‚   â””â”€â”€ infrastructure/             # ðŸ”´ FRAMEWORKS & DRIVERS
+â”‚       â”œâ”€â”€ database/               # SQLAlchemy Base, Migrations (Alembic)
+â”‚       â”œâ”€â”€ redis/                  # Redis client
+â”‚       â””â”€â”€ auth/                   # Supabase JWT validation
+â”‚
+â”œâ”€â”€ tests/
+â”œâ”€â”€ Dockerfile
+â”œâ”€â”€ requirements.txt
+â””â”€â”€ alembic/                        # Migration scripts
 ```
 
 ---
@@ -294,7 +294,7 @@ CREATE TABLE class_types (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) UNIQUE NOT NULL,
     description TEXT,
-    color VARCHAR(7) DEFAULT '#FF4500',
+    color VARCHAR(7) DEFAULT '#00E5FF',
     icon VARCHAR(50),
     created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -330,25 +330,25 @@ CREATE TABLE class_enrollments (
 
 ### 6.1 Workouts & Exercises
 
-- `GET /api/v1/exercises` — Filterable by muscle, equipment.
-- `GET /api/v1/workouts/routines` — List user's custom routines with their exercises.
-- `POST /api/v1/workouts/routines` — Create a new routine with included exercises.
-- `PUT /api/v1/workouts/routines/{routine_id}` — Update routine name and embedded exercises.
-- `DELETE /api/v1/workouts/routines/{routine_id}` — Remove a custom routine.
-- `POST /api/v1/workouts/sessions` — Start a session.
-- `POST /api/v1/workouts/sessions/{session_id}/sets` — Log sets sequentially.
+- `GET /api/v1/exercises` â€” Filterable by muscle, equipment.
+- `GET /api/v1/workouts/routines` â€” List user's custom routines with their exercises.
+- `POST /api/v1/workouts/routines` â€” Create a new routine with included exercises.
+- `PUT /api/v1/workouts/routines/{routine_id}` â€” Update routine name and embedded exercises.
+- `DELETE /api/v1/workouts/routines/{routine_id}` â€” Remove a custom routine.
+- `POST /api/v1/workouts/sessions` â€” Start a session.
+- `POST /api/v1/workouts/sessions/{session_id}/sets` â€” Log sets sequentially.
 
 ### 6.2 Nutrition
 
-- `GET /api/v1/nutrition/targets` — Get current daily macros.
-- `POST /api/v1/nutrition/meals` — Log a meal.
+- `GET /api/v1/nutrition/targets` â€” Get current daily macros.
+- `POST /api/v1/nutrition/meals` â€” Log a meal.
 
 ### 6.3 Intelligence & Recommendations
 
-- `POST /api/v1/ai/workout-plans` — AI-generated workout plan via OpenRouter/Groq.
-- `POST /api/v1/ai/chat-messages` — Conversational fitness coach with history support.
-- `POST /api/v1/recovery/sync` — Endpoint for mobile app to post HealthKit batches.
-- `GET /api/v1/recommendations/daily` — Get the modulated daily smart recommendation.
+- `POST /api/v1/ai/workout-plans` â€” AI-generated workout plan via OpenRouter/Groq.
+- `POST /api/v1/ai/chat-messages` â€” Conversational fitness coach with history support.
+- `POST /api/v1/recovery/sync` â€” Endpoint for mobile app to post HealthKit batches.
+- `GET /api/v1/recommendations/daily` â€” Get the modulated daily smart recommendation.
 
 ### 6.4 Gamification
 
@@ -358,15 +358,15 @@ CREATE TABLE class_enrollments (
 
 ### 6.5 Group Classes
 
-- `GET /api/v1/classes/types` — List all class types.
-- `POST /api/v1/classes/types` — Create class type (admin only).
-- `GET /api/v1/classes/schedule` — View weekly schedule (filterable by date range).
-- `POST /api/v1/classes/schedule` — Create scheduled class (admin/coach).
-- `PUT /api/v1/classes/schedule/{id}` — Update scheduled class (admin/coach).
-- `DELETE /api/v1/classes/schedule/{id}` — Delete scheduled class (admin only).
-- `POST /api/v1/classes/{class_id}/enroll` — Enroll in a class.
-- `DELETE /api/v1/classes/{class_id}/enroll` — Unenroll from a class.
-- `GET /api/v1/classes/{class_id}/enrollments` — List enrolled users (coach/admin).
+- `GET /api/v1/classes/types` â€” List all class types.
+- `POST /api/v1/classes/types` â€” Create class type (admin only).
+- `GET /api/v1/classes/schedule` â€” View weekly schedule (filterable by date range).
+- `POST /api/v1/classes/schedule` â€” Create scheduled class (admin/coach).
+- `PUT /api/v1/classes/schedule/{id}` â€” Update scheduled class (admin/coach).
+- `DELETE /api/v1/classes/schedule/{id}` â€” Delete scheduled class (admin only).
+- `POST /api/v1/classes/{class_id}/enroll` â€” Enroll in a class.
+- `DELETE /api/v1/classes/{class_id}/enroll` â€” Unenroll from a class.
+- `GET /api/v1/classes/{class_id}/enrollments` â€” List enrolled users (coach/admin).
 
 ---
 
@@ -424,7 +424,7 @@ The current failover strategy is intentionally simple for the MVP. Future routin
 
 ### 7.4 Future Agentic App Actions
 
-The AI coach is currently conversational and advisory. A future agentic layer can allow the assistant to operate inside Volt-Gym through explicit backend actions, such as:
+The AI coach is currently conversational and advisory. A future agentic layer can allow the assistant to operate inside Zenith through explicit backend actions, such as:
 
 - Create or update a workout routine
 - Enroll the user into a scheduled class
@@ -483,3 +483,4 @@ A robust gamification engine using Event-Driven principles within the monolith:
   6. Results pushed to client via WebSockets.
 
 ---
+
