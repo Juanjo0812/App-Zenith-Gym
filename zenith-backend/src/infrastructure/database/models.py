@@ -1,8 +1,11 @@
+import uuid
+
 from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, Date, ARRAY, Numeric
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
-import uuid
+
+from src.time_utils import utc_now
+
 from .base import Base
 
 class UserModel(Base):
@@ -16,8 +19,8 @@ class UserModel(Base):
     address = Column(String, nullable=True)
     level = Column(Integer, default=1)
     total_xp = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     # Relationships
     roles = relationship("UserRoleModel", back_populates="user", cascade="all, delete-orphan")
@@ -57,7 +60,7 @@ class CoachClientModel(Base):
 
     coach_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     client_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     coach = relationship("UserModel", foreign_keys=[coach_id], back_populates="coach_relationships")
     client = relationship("UserModel", foreign_keys=[client_id], back_populates="client_relationships")
@@ -86,7 +89,7 @@ class WorkoutRoutineModel(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
     name = Column(String(255), nullable=False)
     is_ai_generated = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     user = relationship("UserModel", back_populates="workout_routines")
     routine_exercises = relationship("RoutineExerciseModel", back_populates="routine", cascade="all, delete-orphan")
@@ -112,7 +115,7 @@ class WorkoutSessionModel(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     routine_id = Column(UUID(as_uuid=True), ForeignKey("workout_routines.id", ondelete="SET NULL"))
-    started_at = Column(DateTime, default=datetime.utcnow)
+    started_at = Column(DateTime, default=utc_now)
     ended_at = Column(DateTime)
 
     user = relationship("UserModel", back_populates="workout_sessions")
@@ -161,7 +164,7 @@ class MealLogModel(Base):
     meal_type = Column(String(50), default="otro")  # desayuno, almuerzo, cena, snack, otro
     serving_size = Column(String(100), nullable=True)
     notes = Column(String, nullable=True)
-    logged_at = Column(DateTime, default=datetime.utcnow)
+    logged_at = Column(DateTime, default=utc_now)
 
     user = relationship("UserModel", back_populates="meals_logged")
 
@@ -171,7 +174,7 @@ class WaterLogModel(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     amount_ml = Column(Integer, nullable=False)
-    logged_at = Column(DateTime, default=datetime.utcnow)
+    logged_at = Column(DateTime, default=utc_now)
 
     user = relationship("UserModel", back_populates="water_logs")
 
@@ -196,7 +199,7 @@ class ClassTypeModel(Base):
     description = Column(String, nullable=True)
     color = Column(String(7), default="#00E5FF")
     icon = Column(String(50), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     scheduled_classes = relationship("ScheduledClassModel", back_populates="class_type", cascade="all, delete-orphan")
 
@@ -215,7 +218,7 @@ class ScheduledClassModel(Base):
     notes = Column(String, nullable=True)
     is_cancelled = Column(Boolean, default=False)
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     class_type = relationship("ClassTypeModel", back_populates="scheduled_classes")
     instructor = relationship("UserModel", foreign_keys=[instructor_id])
@@ -229,7 +232,7 @@ class ClassEnrollmentModel(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     scheduled_class_id = Column(UUID(as_uuid=True), ForeignKey("scheduled_classes.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    enrolled_at = Column(DateTime, default=datetime.utcnow)
+    enrolled_at = Column(DateTime, default=utc_now)
     status = Column(String(20), default="enrolled")  # 'enrolled', 'cancelled', 'attended'
 
     scheduled_class = relationship("ScheduledClassModel", back_populates="enrollments")
@@ -244,7 +247,7 @@ class WeightLogModel(Base):
     weight_kg = Column(Numeric(precision=5, scale=2), nullable=False)
     date = Column(Date, nullable=False)
     notes = Column(String, nullable=True)
-    logged_at = Column(DateTime, default=datetime.utcnow)
+    logged_at = Column(DateTime, default=utc_now)
 
     user = relationship("UserModel", back_populates="weight_logs_entries")
 
@@ -259,7 +262,7 @@ class BadgeModel(Base):
     condition_type = Column(String(50), nullable=False)
     condition_value = Column(Integer, nullable=False, default=1)
     xp_reward = Column(Integer, nullable=False, default=50)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     user_badges = relationship("UserBadgeModel", back_populates="badge")
 
@@ -270,7 +273,7 @@ class UserBadgeModel(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     badge_id = Column(UUID(as_uuid=True), ForeignKey("badges.id", ondelete="CASCADE"), nullable=False)
-    unlocked_at = Column(DateTime, default=datetime.utcnow)
+    unlocked_at = Column(DateTime, default=utc_now)
 
     user = relationship("UserModel", back_populates="user_badges")
     badge = relationship("BadgeModel", back_populates="user_badges")
@@ -288,7 +291,7 @@ class ChallengeModel(Base):
     end_date = Column(Date, nullable=False)
     xp_reward = Column(Integer, nullable=False, default=100)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
 
     user_progress = relationship("UserChallengeProgressModel", back_populates="challenge")
 
@@ -301,7 +304,7 @@ class UserChallengeProgressModel(Base):
     challenge_id = Column(UUID(as_uuid=True), ForeignKey("challenges.id", ondelete="CASCADE"), nullable=False)
     current_value = Column(Integer, nullable=False, default=0)
     completed_at = Column(DateTime, nullable=True)
-    joined_at = Column(DateTime, default=datetime.utcnow)
+    joined_at = Column(DateTime, default=utc_now)
 
     user = relationship("UserModel", back_populates="challenge_progress")
     challenge = relationship("ChallengeModel", back_populates="user_progress")

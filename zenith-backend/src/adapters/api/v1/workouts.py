@@ -1,7 +1,6 @@
 """
 Workout API routes wired to the database and protected with Supabase JWTs.
 """
-from datetime import datetime
 from typing import List, Optional
 from uuid import UUID, uuid4
 
@@ -21,6 +20,7 @@ from src.infrastructure.database.models import (
     WorkoutRoutineModel,
     WorkoutSessionModel,
 )
+from src.time_utils import utc_now
 
 router = APIRouter(prefix="/workouts", tags=["Workouts"])
 
@@ -160,7 +160,7 @@ async def create_routine(
         user_id=current_user.id,
         name=req.name,
         is_ai_generated=False,
-        created_at=datetime.utcnow(),
+        created_at=utc_now(),
     )
 
     db.add(new_routine)
@@ -271,7 +271,7 @@ async def start_session(
         id=uuid4(),
         user_id=current_user.id,
         routine_id=payload.routine_id,
-        started_at=datetime.utcnow(),
+        started_at=utc_now(),
     )
     db.add(new_session)
     await db.commit()

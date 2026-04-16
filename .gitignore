@@ -1,28 +1,51 @@
-# Root .gitignore for App Volt-Gym
+# Dependencias y artefactos de build
+**/node_modules/
+**/.expo/
+**/.expo-shared/
+**/dist/
+**/web-build/
+**/coverage/
+**/*.tsbuildinfo
+.metro-health-check*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Mobile (React Native / Expo)
-volt-gym-mobile/node_modules/
-volt-gym-mobile/.expo/
-volt-gym-mobile/web-build/
-volt-gym-mobile/dist/
-
-# Backend (Python / FastAPI)
+# Python
 **/__pycache__/
 **/*.pyc
 **/*.pyo
 **/*.pyd
-.venv/
-env/
-venv/
-.pytest_cache/
-.coverage
-htmlcov/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage
+**/htmlcov/
+**/.venv/
+**/venv/
+**/env/
 
-# Environment files
-.env
-*.env
-.env.*
+# Archivos de entorno
+**/.env
+**/.env.*
+!**/.env.example
 
-# OS files
+# Expo / React Native generado localmente
+**/android/
+**/ios/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Higiene del repositorio
+git_status.txt
+zenith-mobile/assets/exercises/*.pdf
+
+# SO y editores
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/

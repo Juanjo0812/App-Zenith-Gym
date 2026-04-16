@@ -1,7 +1,10 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
 from uuid import UUID, uuid4
+
+from pydantic import BaseModel, Field
+
+from src.time_utils import utc_now
 
 class ExerciseEntity(BaseModel):
     id: UUID = Field(default_factory=uuid4)
@@ -25,7 +28,7 @@ class WorkoutSessionEntity(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     user_id: UUID
     routine_id: Optional[UUID] = None
-    started_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: datetime = Field(default_factory=utc_now)
     ended_at: Optional[datetime] = None
     sets: List[SetLog] = Field(default_factory=list)
 
@@ -42,7 +45,7 @@ class WorkoutSessionEntity(BaseModel):
 
     def complete_session(self):
         """Mark session as complete."""
-        self.ended_at = datetime.utcnow()
+        self.ended_at = utc_now()
 
     @property
     def total_volume(self) -> float:

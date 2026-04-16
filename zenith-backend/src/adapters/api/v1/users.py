@@ -18,6 +18,7 @@ from src.infrastructure.database.models import (
     WorkoutRoutineModel,
     WorkoutSessionModel,
 )
+from src.time_utils import utc_now
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -185,7 +186,7 @@ async def get_my_dashboard(
     session: AsyncSession = Depends(get_session),
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
-    now = datetime.utcnow()
+    now = utc_now()
     today = now.date()
     week_ago = now - timedelta(days=7)
 
@@ -318,7 +319,7 @@ async def update_my_profile(
     if profile_image_url is not None:
         db_user.profile_image_url = profile_image_url.strip() or None
 
-    db_user.updated_at = datetime.utcnow()
+    db_user.updated_at = utc_now()
     await session.commit()
     await session.refresh(db_user)
 

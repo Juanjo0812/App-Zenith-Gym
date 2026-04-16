@@ -1,10 +1,10 @@
-from datetime import datetime
 from uuid import uuid4
 
 import pytest
 
 from src.domain.user.entities import UserEntity
 from src.domain.workout.entities import SetLog, WorkoutSessionEntity
+from src.time_utils import utc_now
 from src.use_cases.log_session_apply_xp import LogSessionUseCase
 
 
@@ -42,7 +42,7 @@ async def test_log_session_use_case_awards_five_xp_per_set():
     session = WorkoutSessionEntity(
         id=uuid4(),
         user_id=user_id,
-        started_at=datetime.utcnow(),
+        started_at=utc_now(),
         sets=[
             SetLog(exercise_id=uuid4(), reps=10, weight_kg=20),
             SetLog(exercise_id=uuid4(), reps=8, weight_kg=30),
@@ -71,7 +71,7 @@ async def test_log_session_use_case_rejects_foreign_session():
     session = WorkoutSessionEntity(
         id=uuid4(),
         user_id=owner_id,
-        started_at=datetime.utcnow(),
+        started_at=utc_now(),
     )
     user = UserEntity(id=other_user_id, name="Zenith", level=1, total_xp=0)
 
