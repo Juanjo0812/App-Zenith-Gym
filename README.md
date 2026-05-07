@@ -24,17 +24,27 @@
 
 ## Vista previa
 
-<div align="center" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
-  <img src="./docs/images/screenshot_home.png" alt="Inicio" style={{ width: '18%', minWidth: '150px', borderRadius: '12px' }} />
-  <img src="./docs/images/screenshot_workouts.png" alt="Entrenos" style={{ width: '18%', minWidth: '150px', borderRadius: '12px' }} />
-  <img src="./docs/images/screenshot_coach.png" alt="Entrenador IA" style={{ width: '18%', minWidth: '150px', borderRadius: '12px' }} />
-  <img src="./docs/images/screenshot_progress1.png" alt="Progreso - Evolución" style={{ width: '18%', minWidth: '150px', borderRadius: '12px' }} />
-  <img src="./docs/images/screenshot_progress2.png" alt="Progreso - Métricas" style={{ width: '18%', minWidth: '150px', borderRadius: '12px' }} />
-</div>
-
 <div align="center">
-<br/>
+
+<table>
+  <tr>
+    <td align="center"><img src="./docs/images/screenshot_home.png" alt="Inicio" width="180" /></td>
+    <td align="center"><img src="./docs/images/screenshot_workouts.png" alt="Entrenos" width="180" /></td>
+    <td align="center"><img src="./docs/images/screenshot_coach.png" alt="Entrenador IA" width="180" /></td>
+    <td align="center"><img src="./docs/images/screenshot_progress1.png" alt="Progreso - Evolución" width="180" /></td>
+    <td align="center"><img src="./docs/images/screenshot_progress2.png" alt="Progreso - Métricas" width="180" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Inicio</strong></td>
+    <td align="center"><strong>Entrenos</strong></td>
+    <td align="center"><strong>Entrenador IA</strong></td>
+    <td align="center"><strong>Evolución</strong></td>
+    <td align="center"><strong>Métricas</strong></td>
+  </tr>
+</table>
+
 *Panel principal, entrenamientos, entrenador con IA y seguimiento de progreso detallado*
+
 </div>
 
 ---
