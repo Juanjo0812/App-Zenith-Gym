@@ -1,6 +1,6 @@
 <div align="center">
 
-![Zenith Logo](./docs/images/zenith_logo.png)
+<img src="./docs/images/zenith_logo.png" alt="Zenith Logo" width="200" />
 
 # Zenith
 
@@ -53,7 +53,7 @@
 
 <div align="center">
 
-![Arquitectura de Zenith](./docs/images/architecture.png)
+<img src="./docs/images/architecture.png" alt="Arquitectura de Zenith" width="600" />
 
 </div>
 
